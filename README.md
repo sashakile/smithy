@@ -1,0 +1,2 @@
+# smithy
+Agentic Differentiation System 
