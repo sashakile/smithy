@@ -1,44 +1,102 @@
 # smithy
 
-> Agentic Differentiation System
+> Progressive Differentiation Framework for Adaptive Agent Architecture
+> "A2A tells agents how to talk. Smithy tells agents how to think cheaper."
 
-## Overview
+## What It Is
 
-smithy is an agentic differentiation system.
+Smithy reduces production AI agent costs by 50–97% by progressively differentiating
+agent components from expensive LLM calls (P4, ~$0.50/call) to cheap deterministic
+code (P1, ~$0/call, <1ms), with validated, reversible transitions at each step.
+
+Three deliverables:
+- `mr` CLI — analyze, propose, and execute differentiation
+- DR (Differentiation Runtime) — Clojure orchestration engine (Integrant, Malli, core.async)
+- Progressive Differentiation Model — grounded in cell biology metaphor
+
+## Potency Levels
+
+| Level | Implementation | Latency | Cost |
+|---|---|---|---|
+| P4: Pluripotent | Full LLM agent, multi-turn | 2–30s | ~$0.50 |
+| P3: Multipotent | Constrained LLM, structured output | 200ms–2s | ~$0.05 |
+| P2: Committed | ONNX classifier, Drools+PMML | 5–50ms | ~$0.001 |
+| P1: Differentiated | Drools DRL/DMN, lookup, deterministic code | <1ms | ~$0 |
+
+## Core Type System (v2.1)
+
+Key types (all ≤7 required fields):
+- `Potency` — enum [:P1 :P2 :P3 :P4]
+- `Genome {:in schema :out schema}` — component contract, invariant across potency
+- `Decision {:value any? :confidence double}` — DECIDE output
+- `Fault {:origin :kind :message :retry? :retry-after-ms?}` — error type
+- `Cell {:id keyword :genome Genome}` — component identity (immutable)
+- `Fate {:cell-id :potency :threshold :version}` — runtime state
+- `Expression {:cell-id :potency :engine :ref}` — DECIDE implementation
+- `Wiring {:cell-id ...}` — operational config (cascade, deps, middleware, effects)
+
+Five built-in engines: `:drools`, `:onnx`, `:llm`, `:lookup`, `:clojure`
+
+## Pipeline
+
+```
+RECEIVE → DECIDE → ACT → EMIT
+```
+
+Only DECIDE varies by potency. RECEIVE normalizes input to schema-defined keys.
+Cascade lives outside pipeline; tries P1→P4 until confidence ≥ threshold, returns
+best sub-threshold Decision if all levels fail.
+
+## Key CLI Commands
+
+```sh
+mr init                                    # initialize project
+mr plan <component>                        # analyze history, propose differentiation
+mr differentiate <component> --to P1       # execute differentiation
+mr reprogram <component> --to P4           # reverse differentiation
+mr shadow <component> --from P4 --to P1    # validate in parallel on live traffic
+mr review <component>                      # approve/reject proposal
+mr status                                  # DR health and component states
+```
 
 ## Project Structure
 
-- `.wai/` — wai workflow manager configuration (PARA structure)
-- `.beads/` — beads issue tracker database and git hooks
-- `.devcontainer/` — reproducible dev environment configuration
-- `.github/workflows/` — CI/CD (GitHub Actions)
-- `openspec/changes/` — architectural change proposals
-- `justfile` — common task recipes (`just --list`)
-- `prek.toml` — pre-commit hook configuration
-- `CLAUDE.md` — AI agent instructions for Claude Code
-- `AGENTS.md` — AI agent instructions (general)
-- `CONTRIBUTING.md` — contributor guide
+- `docs/spec.md` — full product & technical specification
+- `docs/type-system.md` — v2.1 type system reference (all types, protocols, APIs)
+- `openspec/changes/` — 9 open architectural decisions (DQ-2 through CG-9)
+- `.wai/` — wai workflow manager (PARA structure, ro5+commit skills)
+- `.beads/` — beads issue tracker
+- `justfile` — common tasks (`just --list`)
+- `prek.toml` — pre-commit hooks
 
-## Development Workflow
+## Open Decisions
+
+9 open architectural questions in `openspec/changes/`:
+- DQ-2: Open vs closed genome schemas
+- DQ-3: Shadow disagreement adjudication
+- DQ-4: mr plan target potency selection
+- DQ-5: Genome carving for splits
+- DQ-6: MCP exposure (auto vs opt-in)
+- DQ-7: A2A task state mapping
+- DQ-8: DRL vs DMN selection
+- DQ-9: Per-decision vs per-field confidence (resolved: scalar, v2.x for per-field)
+- DQ-10: Multi-tenant DR (shared vs isolated)
+- CG-9: Genome evolution strategy
+
+## Development
 
 ```sh
-wai prime        # Orient at session start
-wai status       # Check project status
-bd ready         # Find unblocked work
-just lint        # Run pre-commit checks
-just doctor      # Check workspace health
-just way         # Check repo best practices
+wai prime        # orient at session start
+wai status       # check project status
+bd ready         # find unblocked work
+just lint        # run pre-commit checks
+just way         # check repo best practices
 ```
 
-## Issue Tracking
+## Integrations
 
-```sh
-bd create "Title" --type task --priority 2   # Create issue
-bd ready                                      # List unblocked work
-bd close <id>                                 # Complete work
-```
-
-## Change Proposals
-
-Add proposals to `openspec/changes/YYYY-MM-DD-short-title.md`.
-See `openspec/AGENTS.md` for the template.
+- Spring AI: `SmithyDifferentiationAdvisor` intercepts ChatClient calls
+- MCP: exposes components as tools (opt-in via `:mcp true` in Wiring)
+- A2A: opaque black box — callers never know if P1 or P4 answered
+- LangGraph/Python: HTTP sidecar at `POST /v1/decide`
+- Kafka: core.async channels backed by Kafka topics

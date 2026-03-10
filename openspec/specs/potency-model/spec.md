@@ -1,0 +1,53 @@
+## Purpose
+Define the four potency levels (P1–P4), their ordering, cost/latency characteristics, and the genome invariance constraint that governs differentiation and reprogramming.
+
+## Requirements
+
+### Requirement: Four potency levels with total ordering
+The system SHALL define exactly four potency levels — P1, P2, P3, P4 — with a total ordering
+where P1 < P2 < P3 < P4. Every component SHALL have a current potency level at all times.
+
+#### Scenario: Potency ordering is consistent
+- **WHEN** two potency levels are compared
+- **THEN** P1 < P2 < P3 < P4 is always true and `above`/`below`/`higher?` reflect this ordering
+
+#### Scenario: Potency algebra is complete
+- **WHEN** `above` is called on P4 or `below` is called on P1
+- **THEN** the function returns nil (no level above P4 or below P1)
+
+### Requirement: Genome invariance across potency levels
+The system SHALL maintain a component's genome (`:in` and `:out` schemas) unchanged across all
+potency levels. Only the DECIDE implementation SHALL vary by potency.
+
+#### Scenario: Genome unchanged after differentiation
+- **WHEN** a component is differentiated from P4 to P1
+- **THEN** the component's genome `:in` and `:out` schemas are identical before and after
+
+#### Scenario: Genome unchanged after reprogramming
+- **WHEN** a component is reprogrammed from P1 to P4
+- **THEN** the component's genome `:in` and `:out` schemas are identical before and after
+
+### Requirement: Differentiation direction is P4 to P1
+The system SHALL define differentiation as movement from higher potency (P4) to lower potency
+(P1). Differentiation SHALL make a component cheaper, faster, and less flexible.
+
+#### Scenario: Differentiation moves potency downward
+- **WHEN** `mr differentiate` is called with `--to P1`
+- **THEN** the component's potency in Fate is updated to P1 and the previous potency is archived
+
+### Requirement: Reprogramming direction is P1 to P4
+The system SHALL define reprogramming as movement from lower potency (P1) to higher potency
+(P4). Reprogramming SHALL restore flexibility at the cost of higher latency and cost.
+
+#### Scenario: Reprogramming moves potency upward
+- **WHEN** `mr reprogram` is called with `--to P4`
+- **THEN** the component's potency in Fate is updated to P4 and previous implementation is retained in standby
+
+### Requirement: Cost and latency are monotonically ordered by potency
+The system SHALL document that P1 implementations have lower expected latency and cost than P4.
+Reference values: P1 <1ms ~$0/call; P2 5–50ms ~$0.001/call; P3 200ms–2s ~$0.05/call;
+P4 2–30s ~$0.50/call. These are illustrative order-of-magnitude targets, not hard SLAs.
+
+#### Scenario: P1 is faster than P4
+- **WHEN** the same input is processed at P1 and at P4
+- **THEN** P1 latency is expected to be orders of magnitude lower than P4
