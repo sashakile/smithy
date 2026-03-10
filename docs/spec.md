@@ -1,6 +1,6 @@
 # Smithy — Product & Technical Specification
 
-**Version:** 1.3 (February 2026) + v2.1 type system (March 2026)
+**Version:** 0.1.0 (March 2026)
 **Tagline:** "A2A tells agents how to talk. Smithy tells agents how to think cheaper."
 
 ---

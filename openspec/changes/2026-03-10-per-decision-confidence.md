@@ -20,9 +20,9 @@ fields, not the entire decision.
 
 ## Proposal
 
-**Per-decision (scalar) for v1. Per-field is v2.x feature.**
+**Per-decision (scalar) for v0.1.0. Per-field is v2.x feature.**
 
-`Decision.confidence` remains a scalar scalar in v2.1. The cascade threshold check operates
+`Decision.confidence` remains a scalar scalar in v0.1.0. The cascade threshold check operates
 on the single scalar, which must represent the weakest-link confidence of the full output.
 
 Rationale:
@@ -37,4 +37,4 @@ architectural complexity.
 
 ## Decision
 
-Resolved in v2.1: per-decision scalar. Per-field deferred to v2.x.
+Resolved in v0.1.0: per-decision scalar. Per-field deferred to v2.x.

@@ -1,6 +1,6 @@
-# Smithy Type System — v2.1 Reference
+# Smithy Type System — v0.1.0 Reference
 
-**Version:** 2.1 (March 2026)
+**Version:** 0.1.0 (March 2026)
 **Status:** Authoritative. Post Rule-of-5 review — all 23 issues resolved.
 **Constraint:** No type may have more than 7 required fields. Any type with >7 must be split.
 
@@ -180,7 +180,7 @@ Cascade iterates through all expressions at a potency level before escalating.
      :wiring (get-in registry [:wirings cell-id])}))
 ```
 
-v1: one 20-field map. v2.1: four small maps, composed by cell-id.
+v1: one 20-field map. v0.1.0: four small maps, composed by cell-id.
 
 ---
 
@@ -537,9 +537,9 @@ HTTP status mapping:
 | ShadowResults | 7 | Comparison data |
 | CostProjection | 3 | Savings estimate |
 
-**v1 → v2.1 metrics:**
+**v1 → v0.1.0 metrics:**
 
-| Metric | v1 | v2.1 |
+| Metric | v1 | v0.1.0 |
 |---|---|---|
 | Max fields on any type | 20 | 8 (Wiring, 1 required) |
 | Avg fields per type | ~14 | ~4 |

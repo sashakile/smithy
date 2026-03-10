@@ -23,7 +23,7 @@ Three deliverables:
 | P2: Committed | ONNX classifier, Drools+PMML | 5–50ms | ~$0.001 |
 | P1: Differentiated | Drools DRL/DMN, lookup, deterministic code | <1ms | ~$0 |
 
-## Core Type System (v2.1)
+## Core Type System (v0.1.0)
 
 Key types (all ≤7 required fields):
 - `Potency` — enum [:P1 :P2 :P3 :P4]
@@ -62,7 +62,7 @@ mr status                                  # DR health and component states
 ## Project Structure
 
 - `docs/spec.md` — full product & technical specification
-- `docs/type-system.md` — v2.1 type system reference (all types, protocols, APIs)
+- `docs/type-system.md` — v0.1.0 type system reference (all types, protocols, APIs)
 - `openspec/changes/` — 9 open architectural decisions (DQ-2 through CG-9)
 - `.wai/` — wai workflow manager (PARA structure, ro5+commit skills)
 - `.beads/` — beads issue tracker

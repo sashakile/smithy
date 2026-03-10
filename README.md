@@ -35,8 +35,8 @@ A ticket classifier that costs $500/day at P4 can cost **$27.50/day** after diff
 
 ## Docs
 
-- [`docs/spec.md`](docs/spec.md) — Full product & technical specification (v1.3)
-- [`docs/type-system.md`](docs/type-system.md) — v2.1 type system reference (all types, protocols, APIs)
+- [`docs/spec.md`](docs/spec.md) — Full product & technical specification (v0.1.0)
+- [`docs/type-system.md`](docs/type-system.md) — v0.1.0 type system reference (all types, protocols, APIs)
 - [`openspec/changes/`](openspec/changes/) — Open architectural decisions
 
 ## Quick Start
