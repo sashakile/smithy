@@ -1,0 +1,44 @@
+# smithy
+
+> Agentic Differentiation System
+
+## Overview
+
+smithy is an agentic differentiation system.
+
+## Project Structure
+
+- `.wai/` — wai workflow manager configuration (PARA structure)
+- `.beads/` — beads issue tracker database and git hooks
+- `.devcontainer/` — reproducible dev environment configuration
+- `.github/workflows/` — CI/CD (GitHub Actions)
+- `openspec/changes/` — architectural change proposals
+- `justfile` — common task recipes (`just --list`)
+- `prek.toml` — pre-commit hook configuration
+- `CLAUDE.md` — AI agent instructions for Claude Code
+- `AGENTS.md` — AI agent instructions (general)
+- `CONTRIBUTING.md` — contributor guide
+
+## Development Workflow
+
+```sh
+wai prime        # Orient at session start
+wai status       # Check project status
+bd ready         # Find unblocked work
+just lint        # Run pre-commit checks
+just doctor      # Check workspace health
+just way         # Check repo best practices
+```
+
+## Issue Tracking
+
+```sh
+bd create "Title" --type task --priority 2   # Create issue
+bd ready                                      # List unblocked work
+bd close <id>                                 # Complete work
+```
+
+## Change Proposals
+
+Add proposals to `openspec/changes/YYYY-MM-DD-short-title.md`.
+See `openspec/AGENTS.md` for the template.

@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  hygiene:
+    name: Repo hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install wai
+        run: |
+          curl -fsSL https://github.com/charly-vibes/wai/releases/download/v2026.3.2/wai_2026.3.2_linux_amd64.tar.gz | tar -xz -C /usr/local/bin
+      - name: Check repo best practices
+        run: wai way --json
+      # TODO: add language-specific build and test steps here

@@ -1,0 +1,34 @@
+{
+  "hooks": {
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "command": "bd prime",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "bd prime",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(wai --help)",
+      "Bash(wai way:*)",
+      "Bash(bd beads:*)",
+      "Bash(bd --help 2\u003e\u00261)"
+    ]
+  }
+}
