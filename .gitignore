@@ -16,3 +16,10 @@ pom.xml.asc
 # Dolt database files (added by bd init)
 .dolt/
 *.db
+
+# Smithy runtime state (lock.edn is committed)
+.smithy/
+!.smithy/lock.edn
+
+# Source documents
+*.docx

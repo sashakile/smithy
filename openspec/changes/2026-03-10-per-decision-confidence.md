@@ -1,6 +1,6 @@
 # DQ-9: Per-Decision vs Per-Field Confidence
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-03-10
 **ID:** DQ-9
 
@@ -22,7 +22,7 @@ fields, not the entire decision.
 
 **Per-decision (scalar) for v0.1.0. Per-field is v2.x feature.**
 
-`Decision.confidence` remains a scalar scalar in v0.1.0. The cascade threshold check operates
+`Decision.confidence` remains a scalar in v0.1.0. The cascade threshold check operates
 on the single scalar, which must represent the weakest-link confidence of the full output.
 
 Rationale:

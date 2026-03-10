@@ -1,7 +1,11 @@
 # Smithy — Product & Technical Specification
 
 **Version:** 0.1.0 (March 2026)
+**Status:** Specification phase — no implementation yet.
 **Tagline:** "A2A tells agents how to talk. Smithy tells agents how to think cheaper."
+**Versioning:** Specs follow semver. Breaking changes to type contracts or pipeline
+semantics require a major version bump. Additive changes (new engines, new middleware)
+are minor bumps. Clarifications and fixes are patches.
 
 ---
 
@@ -9,7 +13,7 @@
 
 ### 1.1 Problem Statement
 
-Running every AI agent decision through an LLM is expensive (~$0.05/call), slow (2–30s), and
+Running every AI agent decision through an LLM is expensive (~$0.50/call), slow (2–30s), and
 unpredictable. Production traffic stabilizes over time — 70% of support tickets match patterns
 that don't need LLM calls. No existing framework provides a principled, automated, reversible
 path from expensive generality to cheap specialization.
@@ -93,6 +97,16 @@ Cost figures are illustrative order-of-magnitude.
 | Shadow Deployment | Running two potency implementations in parallel for validation | Bivalent chromatin |
 | Morphogen | Signal/threshold triggering a differentiation decision | Signaling molecules |
 | Lineage | History of potency transitions | Cell lineage tracing |
+
+### 2.4 Metrics Terminology
+
+Three distinct metrics are used throughout the system. Do not conflate them:
+
+| Metric | Definition | Used By |
+|---|---|---|
+| **Confidence** | Per-decision certainty score (0.0–1.0) returned by DECIDE. Compared against Fate threshold to trigger cascade escalation. | Pipeline, Cascade |
+| **Coverage** | Percentage of total traffic a lower potency level can handle (i.e., produces a Decision above threshold). Measures breadth. | `mr plan`, Proposals |
+| **Agreement** | Percentage of shadow decisions where lower potency matches P4 ground truth. Measures fidelity. | Shadow deployment, `mr review` |
 
 ---
 
@@ -192,10 +206,14 @@ mr reprogram ticket-classifier --to P4 --reason "new product launch"
 `P1 → (uncertain?) → P2 → (uncertain?) → P3 → (uncertain?) → P4`
 
 - **Worst-case latency:** P1→P2→P3→P4 ≈ 32 seconds
-- **Worst-case cost:** ~$0.051 (P4 + P2 + P1). Rare — typically <1% of traffic reaches P4.
+- **Worst-case cost:** ~$0.551 (P1: ~$0 + P2: ~$0.001 + P3: ~$0.05 + P4: ~$0.50). Rare — typically <1% of traffic reaches P4.
 - **Cascade timeout:** configurable `:cascade-timeout` (default: 30s)
 - **Level skipping:** `:cascade-skip` bypasses unused potency levels (e.g. P1→P4 directly)
 - Returns best sub-threshold Decision if all levels fail; fault only on infrastructure failure.
+- **Caller responsibility:** The HTTP API includes `confidence` in every response. Callers
+  MUST check confidence against their own acceptance criteria. A sub-threshold Decision
+  (including confidence 0.0) is a valid response — cascade does not convert low confidence
+  to a fault.
 
 ### 4.4 Shadow Deployment
 
@@ -361,8 +379,11 @@ zero downtime. 60-second rule deploy cycle.
 | Content moderation (50K/day) | $2,500 | ~$132.50 | 94.7% |
 | RAG query routing (20K/day) | $1,000 | ~$257 | 74.3% |
 | Fraud detection (2.4M/day) | $120,000 | ~$2,592 | 97.8% |
-| Chatbot intent detection (50K/day) | $2,500 | ~$932 | 62.7% |
+| Chatbot intent detection (50K/day) | $2,500 | ~$932 | 62.7%¹ |
 | Dynamic pricing (100K/day) | $5,000 | ~$275 | 94.5% |
+
+¹ Lower reduction than other use cases due to higher intent variance — chatbot intents
+have more long-tail patterns that resist P1 differentiation, keeping more traffic at P3/P4.
 
 ---
 

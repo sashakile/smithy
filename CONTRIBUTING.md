@@ -20,7 +20,18 @@ bd create "Title" --type task --priority 2
 
 ### Proposing architectural changes
 
-Create a file in `openspec/changes/` following the template in `openspec/AGENTS.md`.
+Create a file in `openspec/changes/` following the template in [`openspec/AGENTS.md`](openspec/AGENTS.md).
+
+### Commit message format
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+feat: add cascade timeout configuration
+fix: correct worst-case cost calculation in spec
+docs: clarify agreement vs coverage terminology
+chore: update devcontainer tooling versions
+```
 
 ### Committing
 

@@ -2,6 +2,7 @@
 
 > Progressive Differentiation Framework for Adaptive Agent Architecture
 > "A2A tells agents how to talk. Smithy tells agents how to think cheaper."
+> **Status:** Specification phase — no implementation yet. Last updated: 2026-03-10.
 
 ## What It Is
 
@@ -79,7 +80,7 @@ mr status                                  # DR health and component states
 - DQ-6: MCP exposure (auto vs opt-in)
 - DQ-7: A2A task state mapping
 - DQ-8: DRL vs DMN selection
-- DQ-9: Per-decision vs per-field confidence (resolved: scalar, v2.x for per-field)
+- DQ-9: Per-decision vs per-field confidence (accepted: scalar for v0.1.0, per-field deferred to v2.x)
 - DQ-10: Multi-tenant DR (shared vs isolated)
 - CG-9: Genome evolution strategy
 

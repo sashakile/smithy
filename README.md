@@ -1,6 +1,7 @@
 # smithy
 
 [![tracked with wai](https://img.shields.io/badge/tracked%20with-wai-blue)](https://github.com/charly-vibes/wai)
+[![status: specification](https://img.shields.io/badge/status-specification%20phase-orange)]()
 
 Progressive Differentiation Framework for Adaptive Agent Architecture.
 
@@ -39,7 +40,10 @@ A ticket classifier that costs $500/day at P4 can cost **$27.50/day** after diff
 - [`docs/type-system.md`](docs/type-system.md) — v0.1.0 type system reference (all types, protocols, APIs)
 - [`openspec/changes/`](openspec/changes/) — Open architectural decisions
 
-## Quick Start
+## Quick Start (Planned)
+
+> This project is in **specification phase** — the CLI and runtime are not implemented yet.
+> The commands below show the intended workflow.
 
 ```sh
 mr init

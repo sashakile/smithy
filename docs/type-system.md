@@ -1,8 +1,9 @@
 # Smithy Type System — v0.1.0 Reference
 
 **Version:** 0.1.0 (March 2026)
-**Status:** Authoritative. Post Rule-of-5 review — all 23 issues resolved.
+**Status:** Authoritative. Implementation reference for all Smithy types, protocols, and APIs.
 **Constraint:** No type may have more than 7 required fields. Any type with >7 must be split.
+**See also:** [`docs/spec.md`](spec.md) for product-level specification (the "what and why").
 
 ---
 
@@ -281,9 +282,11 @@ with sufficient confidence, or returns the best sub-threshold Decision.
       nil levels)))
 
 (defn cascade-order [base-potency wiring]
+  ;; Returns all potency levels from P1 up to P4, starting at the base and
+  ;; escalating upward. base-potency is the STARTING level (typically the
+  ;; cell's current Fate potency), not a ceiling.
   (let [skip (get-in wiring [:cascade :skip] #{})]
     (->> [:P1 :P2 :P3 :P4]
-         (filter #(<= (potency-rank %) (potency-rank base-potency)))
          (remove skip)
          (sort-by potency-rank))))
 ```
@@ -381,7 +384,9 @@ Implementations: SQLite (dev), PostgreSQL/TimescaleDB (prod), in-memory (test).
   (update-fate!    [reg cell-id expected-version f]
     ;; Called by: mr differentiate, mr reprogram, adaptive threshold tuner.
     ;; CAS semantics: checks :version == expected-version, applies f, increments :version.
-    ;; Throws on version mismatch. Callers retry on conflict.)
+    ;; Throws on version mismatch. Callers retry on conflict.
+    ;; NOTE: Callers MUST re-validate pre-conditions (e.g. source potency) on retry,
+    ;; since another update may have changed the Fate between read and CAS attempt.)
   (add-expression! [reg cell-id expression]
     ;; Called by: mr plan (adds proposed Expression), mr differentiate (commits).
     ;; Appends to expression vector at [cell-id, potency].)

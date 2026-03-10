@@ -17,4 +17,32 @@ jobs:
           curl -fsSL https://github.com/charly-vibes/wai/releases/download/v2026.3.2/wai_2026.3.2_linux_amd64.tar.gz | tar -xz -C /usr/local/bin
       - name: Check repo best practices
         run: wai way --json
+
+  spec-consistency:
+    name: Spec consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify openspec change proposals have valid status
+        run: |
+          invalid=0
+          for f in openspec/changes/*.md; do
+            [ "$f" = "openspec/changes/.gitkeep" ] && continue
+            status=$(grep -m1 '^**Status:**' "$f" | sed 's/.*\*\*Status:\*\* //')
+            case "$status" in
+              proposed|accepted|rejected|deployed|archived) ;;
+              *) echo "INVALID status '$status' in $f"; invalid=1 ;;
+            esac
+          done
+          exit $invalid
+      - name: Check for broken internal links in docs
+        run: |
+          errors=0
+          for f in docs/*.md README.md; do
+            # Extract markdown links to local files
+            grep -oP '\[.*?\]\(\K[^)#]+' "$f" 2>/dev/null | while read -r link; do
+              [ -f "$link" ] || { echo "Broken link: $link in $f"; errors=1; }
+            done
+          done
+          exit $errors
       # TODO: add language-specific build and test steps here
