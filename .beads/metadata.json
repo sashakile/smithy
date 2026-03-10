@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "smithy",
+  "project_id": "96c7f638-c2e2-44b7-878e-96ac654465f4"
+}

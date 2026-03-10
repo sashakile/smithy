@@ -12,3 +12,7 @@ pom.xml.asc
 .lein-failures
 .nrepl-port
 .cpcache/
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db
