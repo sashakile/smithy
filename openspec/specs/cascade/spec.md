@@ -1,5 +1,5 @@
 ## Purpose
-Define the cascade orchestration mechanism that tries potency levels in ascending order, returns the best sub-threshold Decision on exhaustion, and manages concurrent Fate updates with CAS semantics.
+Define the cascade orchestration mechanism that tries potency levels in ascending order, consumes explicit pipeline stage results, combines candidate outcomes with a deterministic fold, returns the best sub-threshold Decision on exhaustion, and manages concurrent Fate updates with CAS semantics.
 
 ## Requirements
 
@@ -15,7 +15,8 @@ independently testable.
 ### Requirement: Cascade tries potency levels in ascending order
 The system SHALL try potency levels from lowest (P1) up to the component's base potency,
 stopping when a Decision meets or exceeds the confidence threshold. Levels in the `:cascade :skip`
-set SHALL be omitted.
+set SHALL be omitted. `{:escalate ...}` results from the pipeline SHALL advance Cascade to the
+next eligible potency level without being treated as terminal faults.
 
 #### Scenario: Cascade stops at first confident result
 - **WHEN** P1 returns a Decision with confidence ≥ threshold
@@ -24,6 +25,10 @@ set SHALL be omitted.
 #### Scenario: Cascade skips configured levels
 - **WHEN** `:cascade {:skip #{:P2 :P3}}` is configured
 - **THEN** cascade tries only P1 and P4, skipping P2 and P3
+
+#### Scenario: Escalation advances to the next potency
+- **WHEN** a P2 pipeline attempt returns `{:escalate {:kind :retry/exhausted ...}}`
+- **THEN** cascade records that result and tries P3 next if P3 is eligible
 
 ### Requirement: Cascade returns best sub-threshold Decision on exhaustion
 The system SHALL return the highest-confidence Decision seen across all potency levels when
@@ -37,6 +42,25 @@ when all potency levels produce infrastructure faults.
 #### Scenario: All levels produce infrastructure faults returns Fault
 - **WHEN** every potency level returns `{:fault ...}` due to infrastructure failure
 - **THEN** cascade returns `{:fault {:origin :decide :kind :cascade/exhausted :retry? false}}`
+
+### Requirement: Candidate selection is a deterministic associative fold
+The system SHALL combine results within a potency level and across potency levels using a
+deterministic associative fold over candidate results. The combine function SHALL prefer:
+(1) any threshold-meeting Decision over all other candidates,
+(2) otherwise the highest-confidence Decision,
+(3) otherwise `{:escalate ...}` over terminal faults,
+(4) otherwise the most informative terminal Fault. Ties between Decisions with equal confidence
+SHALL be broken deterministically by stable expression order within a potency level and then by
+lower potency before higher potency across levels. The fold SHALL define an identity element
+representing "no candidate yet".
+
+#### Scenario: Equal-confidence decisions resolve deterministically
+- **WHEN** two expressions at the same potency both return confidence 0.90
+- **THEN** cascade selects the earlier expression in stable registration order
+
+#### Scenario: Fold identity does not affect the result
+- **WHEN** candidate reduction begins from the empty candidate
+- **THEN** combining the empty candidate with any actual result yields the same result
 
 ### Requirement: Multiple expressions per potency level are all tried
 The system SHALL store expressions as a vector per `[cell-id, potency]` pair. Cascade SHALL
@@ -67,3 +91,11 @@ If no potency level has completed before the timeout, cascade SHALL return
 #### Scenario: Cascade timeout before any result returns fault
 - **WHEN** cascade timeout is reached before P1 produces any Decision or Fault
 - **THEN** cascade returns `{:fault {:origin :decide :kind :cascade/timeout :retry? true}}`
+
+### Requirement: Candidate fold laws are property-tested
+The system SHALL verify the candidate combine operation with property-based tests for
+associativity and identity so regrouping or parallel reduction cannot change selection results.
+
+#### Scenario: Candidate fold remains stable under regrouping
+- **WHEN** candidate results are reduced as `(combine a (combine b c))` and `((combine a b) c)`
+- **THEN** both reductions yield the same selected candidate

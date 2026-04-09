@@ -1,5 +1,5 @@
 ## Purpose
-Define the Proposal type and lifecycle (draft to shadow to review to approve to commit) that governs all Registry changes including differentiation, reprogramming, splits, and fuses.
+Define the Proposal envelope, kind-specific proposal variants, and lifecycle rules that govern all Registry changes including differentiation, reprogramming, splits, and fuses.
 
 ## Requirements
 
@@ -16,22 +16,51 @@ occur outside the Proposal commit workflow.
 - **WHEN** `mr reprogram` is executed
 - **THEN** a Proposal with `:kind :reprogram` is created and committed through the proposal workflow (emergency skips `:shadowing` only)
 
-### Requirement: Proposal lifecycle is draft → shadow → review → approve → commit
-The system SHALL progress Proposals through five statuses: `:draft`, `:shadowing`,
-`:reviewing`, `:approved`, `:committed`. A Proposal MAY be `:rejected` from the
-`:reviewing` stage instead of advancing to `:approved`.
+### Requirement: Proposal is a tagged union with kind-specific lifecycle rules
+The system SHALL model Proposal as a tagged union keyed by `:kind`. All Proposals SHALL share
+the envelope fields required for auditability (`:kind`, `:status`, `RegistryDiff`, `Evidence`,
+review metadata), but allowed statuses and transitions SHALL be validated per proposal kind
+rather than by a single generic lifecycle.
 
-#### Scenario: Proposal cannot skip review
-- **WHEN** a Proposal is in `:draft` status
+#### Scenario: Proposal kind determines legal transitions
+- **WHEN** a Proposal transition is evaluated
+- **THEN** the system validates the transition against the lifecycle for that Proposal's `:kind`
+
+### Requirement: Differentiation and standard reprogram proposals use the shadowed lifecycle
+The system SHALL progress `:differentiate` and non-emergency `:reprogram` proposals through
+`:draft` → `:shadowing` → `:reviewing` → `:approved` → `:committed`. Either kind MAY transition
+from `:reviewing` to `:rejected`.
+
+#### Scenario: Differentiation proposal cannot skip review
+- **WHEN** a `:differentiate` Proposal is in `:draft` status
 - **THEN** it cannot be committed until it passes through `:shadowing`, `:reviewing`, and `:approved`
 
 #### Scenario: Rejected proposal is not committed
 - **WHEN** a Proposal is rejected at review
 - **THEN** its status is `:rejected` and no Registry mutations occur
 
+### Requirement: Emergency reprogram proposals use the expedited lifecycle
+The system SHALL progress `:reprogram` proposals created with `--emergency` through
+`:draft` → `:reviewing` → `:approved` → `:committed`, skipping `:shadowing` while still
+requiring review and approval metadata.
+
 #### Scenario: Emergency reprogram skips shadowing but still records approval
 - **WHEN** `mr reprogram --emergency` is executed by an authorized human operator
 - **THEN** the Proposal bypasses `:shadowing`, records review and approval metadata, and commits without omitting the approval record
+
+### Requirement: Topology proposals use the reviewable topology lifecycle
+The system SHALL progress `:split` and `:fuse` proposals through a topology-specific lifecycle.
+Manually created topology proposals SHALL start in `:draft`; analyzer-generated topology
+proposals MAY start in `:reviewing`; both kinds SHALL require explicit approval before
+transitioning to `:committed`.
+
+#### Scenario: Manual split starts in draft
+- **WHEN** `mr split` creates a topology proposal
+- **THEN** the Proposal starts in `:draft` and later advances to `:reviewing` before approval
+
+#### Scenario: Analyzer-generated split starts in reviewing
+- **WHEN** the topology analyzer generates a split proposal
+- **THEN** the Proposal enters `:reviewing` directly with its triggering evidence attached
 
 ### Requirement: Evidence captures quantitative justification
 The system SHALL record Evidence with a Proposal including: traces analyzed, coverage rate,

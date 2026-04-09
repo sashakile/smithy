@@ -1,12 +1,13 @@
 ## Purpose
-Define the six-layer standard stage middleware stack, the Ring interceptor composition pattern, retry semantics, cascade-bridge signaling, the mandatory signal-write redaction middleware, and custom middleware declaration in smithy.edn.
+Define the six-layer standard stage middleware stack, the Ring interceptor composition pattern, retry semantics, explicit cascade escalation results, the mandatory signal-write redaction middleware, and custom middleware declaration in smithy.edn.
 
 ## Requirements
 
 ### Requirement: Middleware follows Ring interceptor pattern
 The system SHALL implement middleware as `(handler -> handler)` functions that compose via
 `comp`. The middleware stack SHALL wrap each pipeline stage individually (stage-level
-granularity), not the full pipeline.
+granularity), not the full pipeline. Each wrapped handler SHALL preserve the stage result
+carrier `{:ok ...} | {:fault ...} | {:escalate ...}`.
 
 #### Scenario: Custom middleware wraps a single stage
 - **WHEN** custom middleware is applied to the `:decide` stage
@@ -29,6 +30,10 @@ The system SHALL provide six standard middleware layers applied outermost-first:
 - **WHEN** a `:decide` handler throws a transient infrastructure exception
 - **THEN** `wrap-error-enrichment` converts it to a Fault before `wrap-retry` evaluates whether to retry
 
+#### Scenario: Middleware preserves explicit escalation results
+- **WHEN** an inner handler returns `{:escalate ...}`
+- **THEN** outer middleware propagates that result without converting it to `:ok` or mutating pipeline context
+
 ### Requirement: wrap-retry only retries :transient errors
 The system SHALL retry only errors with severity `:transient` in the `:decide` and `:act` stages.
 `:fatal` and `:degraded` errors SHALL NOT be retried. Maximum retries defaults to 2;
@@ -47,13 +52,13 @@ base delay 100ms; max delay 5000ms with exponential backoff and jitter.
 - **THEN** `wrap-retry` waits exactly that duration before retrying
 
 ### Requirement: wrap-cascade-bridge signals cascade on exhausted retries
-The system SHALL set `:cascade? true` in the pipeline context when `wrap-retry` exhausts
-its retries on a `:transient` `:decide` error, signaling the Cascade to try the next
-potency level.
+The system SHALL return `{:escalate fault}` when `wrap-retry` exhausts its retries on a
+`:transient` `:decide` error, signaling Cascade to try the next potency level. It SHALL NOT
+signal escalation by mutating the pipeline context.
 
 #### Scenario: Exhausted retries trigger cascade
 - **WHEN** all retry attempts fail for a :decide :transient error
-- **THEN** wrap-cascade-bridge sets :cascade? true and cascade escalates to the next potency level
+- **THEN** `wrap-cascade-bridge` returns `{:escalate {:origin :decide :kind :retry/exhausted ...}}` and Cascade escalates to the next potency level
 
 ### Requirement: Signal persistence uses mandatory PII-redaction middleware
 The system SHALL apply `wrap-pii-redaction` on the signal-write path before any Trace is
@@ -70,11 +75,12 @@ raw input, preserving only the input hash, and annotating the trace with the pol
 - **WHEN** raw input storage is enabled but the redaction policy is missing or malformed
 - **THEN** `wrap-pii-redaction` removes raw input from the trace, stores only the input hash, and records a redaction-policy failure annotation
 
-### Requirement: Custom middleware is declared in smithy.edn
-The system SHALL support declaring custom middleware in smithy.edn via `:insert-before`,
-`:insert-after`, or `:replace` directives against named standard middleware. Per-component
-`:retry` and `:logging` keys SHALL override DR-level defaults.
+### Requirement: Custom middleware is declared in smithy.edn via stable capability slots
+The system SHALL support declaring custom middleware in smithy.edn against stable capability
+slots such as `:before-tracing`, `:before-retry`, `:after-retry`, and `:before-signal-write`,
+rather than by naming concrete implementation functions. Per-component `:retry` and `:logging`
+keys SHALL override DR-level defaults.
 
-#### Scenario: Custom middleware inserted before wrap-retry
-- **WHEN** smithy.edn declares custom middleware with `:insert-before wrap-retry`
-- **THEN** the custom middleware executes before wrap-retry in the onion order
+#### Scenario: Custom middleware targets retry slot
+- **WHEN** smithy.edn declares custom middleware with `:slot :before-retry`
+- **THEN** the custom middleware executes before the standard retry capability in the onion order

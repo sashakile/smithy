@@ -1,5 +1,5 @@
 ## Purpose
-Define the four-stage RECEIVE→DECIDE→ACT→EMIT pipeline, the separation of concerns across stages, input normalization, output validation, and fault short-circuiting behavior.
+Define the four-stage RECEIVE→DECIDE→ACT→EMIT pipeline, the separation of concerns across stages, the shared stage result carrier used for composition, input normalization, output validation, and fault short-circuiting behavior.
 
 ## Requirements
 
@@ -10,6 +10,22 @@ SHALL have exactly one responsibility. Only DECIDE SHALL vary by potency level.
 #### Scenario: Each stage has one responsibility
 - **WHEN** the pipeline processes a request
 - **THEN** RECEIVE validates/normalizes input, DECIDE applies logic, ACT executes side effects, EMIT validates output — no stage performs another stage's responsibility
+
+### Requirement: All pipeline stages compose through a shared Outcome carrier
+The system SHALL model successful stage composition through a shared carrier:
+`{:ok value}` for success, `{:fault fault}` for terminal failure, and `{:escalate fault}` for
+non-terminal escalation to Cascade. Every stage SHALL accept the unwrapped success value from the
+prior stage and SHALL return one of these three variants. Stage composition SHALL use `then`
+or an equivalent primitive that short-circuits on `:fault` and propagates `:escalate`
+without invoking later stages in the current potency attempt.
+
+#### Scenario: Successful stages return wrapped values
+- **WHEN** RECEIVE, DECIDE, ACT, and EMIT complete successfully
+- **THEN** each stage returns `{:ok ...}` and the next stage receives the unwrapped success value
+
+#### Scenario: Escalation short-circuits the current potency attempt
+- **WHEN** DECIDE or ACT returns `{:escalate {:origin :decide ...}}`
+- **THEN** later stages at that potency are not invoked and Cascade receives the escalation result
 
 ### Requirement: RECEIVE normalizes input to schema-defined keys
 The system SHALL strip any keys not defined in the component's `:in` genome schema before
@@ -41,11 +57,11 @@ to the ACT stage. RECEIVE, DECIDE, and EMIT SHALL be pure functions.
 
 #### Scenario: DECIDE produces no side effects
 - **WHEN** DECIDE is invoked
-- **THEN** it returns a Decision without writing to any external system
+- **THEN** it returns `{:ok Decision}` without writing to any external system
 
 #### Scenario: ACT executes declared effects
 - **WHEN** ACT is invoked with a list of Effect declarations in Wiring
-- **THEN** it executes each declared effect and returns an enriched Decision
+- **THEN** it executes each declared effect and returns `{:ok enriched-Decision}`
 
 ### Requirement: EMIT validates output against genome schema
 The system SHALL validate the final decision value presented to callers after ACT completes
@@ -62,8 +78,13 @@ produce `{:fault {:origin :out :kind :schema/output-violation}}`.
 
 ### Requirement: Pipeline composes stages with thread-first
 The system SHALL compose pipeline stages using thread-first (`->`) with `then` for
-Outcome-aware chaining. A Fault at any stage SHALL short-circuit remaining stages.
+Outcome-aware chaining. A terminal Fault or Escalation at any stage SHALL short-circuit remaining
+stages in the current potency attempt.
 
 #### Scenario: Fault short-circuits pipeline
 - **WHEN** RECEIVE returns `{:fault ...}`
 - **THEN** DECIDE, ACT, and EMIT are not called; the fault is returned directly
+
+#### Scenario: Escalation short-circuits pipeline
+- **WHEN** DECIDE returns `{:escalate ...}`
+- **THEN** ACT and EMIT are not called; the escalation is returned directly to Cascade

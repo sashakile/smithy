@@ -42,14 +42,14 @@ phase: research
  M .beads/hooks/pre-push
  M .beads/hooks/prepare-commit-msg
  M .gitignore
- M openspec/specs/http-api/spec.md
+ M openspec/specs/cascade/spec.md
+ M openspec/specs/engines/spec.md
  M openspec/specs/middleware/spec.md
  M openspec/specs/mr-cli/spec.md
- M openspec/specs/potency-model/spec.md
- M openspec/specs/signals/spec.md
- M openspec/specs/topology-adaptation/spec.md
+ M openspec/specs/pipeline/spec.md
+ M openspec/specs/proposals/spec.md
 ?? .beads/issues.jsonl
 ?? .codex
-?? .wai/projects/smithy/plans/
-?? .wai/projects/smithy/research/2026-04-09-normalized-openspec-requirements-after-specificati.md
+?? .wai/projects/smithy/designs/
+?? .wai/projects/smithy/research/2026-04-09-composability-review-of-openspec-specs-identified.md
 ```

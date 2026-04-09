@@ -38,7 +38,7 @@ available actions (`approve`, `reject`).
 
 #### Scenario: Topology review requires explicit mode
 - **WHEN** a topology proposal is reviewed
-- **THEN** `mr review --topology` loads the proposal and allows approval or rejection without using a separate command family
+- **THEN** `mr review --topology` loads the proposal and applies the topology-specific lifecycle rules without using a separate command family
 
 ### Requirement: mr differentiate executes a validated differentiation
 The system SHALL execute a differentiation via `mr differentiate <component> --to <potency>`
@@ -119,11 +119,11 @@ Registry.
 
 #### Scenario: Manual split creates a proposal
 - **WHEN** `mr split ticket-router --into billing-router support-router` is run
-- **THEN** a split Proposal is created in `:draft` status
+- **THEN** a split Proposal is created in `:draft` status under the topology-specific lifecycle
 
 #### Scenario: Manual fuse creates a proposal
 - **WHEN** `mr fuse intake classify --as intake-classify` is run
-- **THEN** a fuse Proposal is created in `:draft` status
+- **THEN** a fuse Proposal is created in `:draft` status under the topology-specific lifecycle
 
 ### Requirement: mr init initializes project structure
 The system SHALL initialize the project via `mr init`, creating `smithy.edn` and the
