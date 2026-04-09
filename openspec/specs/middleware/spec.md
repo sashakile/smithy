@@ -1,5 +1,5 @@
 ## Purpose
-Define the six-layer standard middleware stack, the Ring interceptor composition pattern, retry semantics, cascade-bridge signaling, and custom middleware declaration in smithy.edn.
+Define the six-layer standard stage middleware stack, the Ring interceptor composition pattern, retry semantics, cascade-bridge signaling, the mandatory signal-write redaction middleware, and custom middleware declaration in smithy.edn.
 
 ## Requirements
 
@@ -12,10 +12,10 @@ granularity), not the full pipeline.
 - **WHEN** custom middleware is applied to the `:decide` stage
 - **THEN** it does not affect RECEIVE, ACT, or EMIT execution
 
-### Requirement: Six standard middleware layers execute in order
+### Requirement: Six standard stage middleware layers execute in order
 The system SHALL provide six standard middleware layers applied outermost-first:
-`wrap-trace-context`, `wrap-structured-logging`, `wrap-metrics`, `wrap-error-enrichment`,
-`wrap-retry`, `wrap-cascade-bridge`.
+`wrap-trace-context`, `wrap-structured-logging`, `wrap-metrics`, `wrap-cascade-bridge`,
+`wrap-retry`, `wrap-error-enrichment`.
 
 #### Scenario: Trace context is available to all inner middleware
 - **WHEN** a pipeline stage executes
@@ -24,6 +24,10 @@ The system SHALL provide six standard middleware layers applied outermost-first:
 #### Scenario: Error enrichment normalizes raw exceptions
 - **WHEN** a pipeline stage throws an unhandled exception
 - **THEN** `wrap-error-enrichment` catches it and produces a canonical Fault map with :origin, :component, :potency, :timestamp, :trace-id populated
+
+#### Scenario: Retry sees classified faults from inner middleware
+- **WHEN** a `:decide` handler throws a transient infrastructure exception
+- **THEN** `wrap-error-enrichment` converts it to a Fault before `wrap-retry` evaluates whether to retry
 
 ### Requirement: wrap-retry only retries :transient errors
 The system SHALL retry only errors with severity `:transient` in the `:decide` and `:act` stages.
@@ -50,6 +54,15 @@ potency level.
 #### Scenario: Exhausted retries trigger cascade
 - **WHEN** all retry attempts fail for a :decide :transient error
 - **THEN** wrap-cascade-bridge sets :cascade? true and cascade escalates to the next potency level
+
+### Requirement: Signal persistence uses mandatory PII-redaction middleware
+The system SHALL apply `wrap-pii-redaction` on the signal-write path before any Trace is
+persisted to the Signal Store. This middleware SHALL be mandatory whenever raw input is
+stored and SHALL use the component's configured redaction fields.
+
+#### Scenario: Trace write redacts configured fields
+- **WHEN** a trace is flushed with raw input and Wiring configures `[:email :ssn]` as redacted fields
+- **THEN** `wrap-pii-redaction` replaces those fields before `append!` is called on the Signal Store
 
 ### Requirement: Custom middleware is declared in smithy.edn
 The system SHALL support declaring custom middleware in smithy.edn via `:insert-before`,

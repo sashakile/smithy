@@ -57,7 +57,13 @@ or threshold. Callers SHALL retry on version mismatch.
 ### Requirement: Cascade timeout is configurable
 The system SHALL support a configurable `:cascade :timeout-ms` (default: 30000ms). If the
 cascade exceeds this timeout, the highest-confidence result obtained so far SHALL be returned.
+If no potency level has completed before the timeout, cascade SHALL return
+`{:fault {:origin :decide :kind :cascade/timeout :retry? true}}`.
 
 #### Scenario: Cascade timeout returns best result
 - **WHEN** cascade timeout is reached while P3 is still executing
 - **THEN** cascade returns the best Decision obtained from P1 and P2 without waiting for P3
+
+#### Scenario: Cascade timeout before any result returns fault
+- **WHEN** cascade timeout is reached before P1 produces any Decision or Fault
+- **THEN** cascade returns `{:fault {:origin :decide :kind :cascade/timeout :retry? true}}`

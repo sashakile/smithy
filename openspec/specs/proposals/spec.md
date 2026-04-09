@@ -1,5 +1,5 @@
 ## Purpose
-Define the Proposal type and lifecycle (draft to shadow to review to commit) that governs all Registry changes including differentiation, reprogramming, splits, and fuses.
+Define the Proposal type and lifecycle (draft to shadow to review to approve to commit) that governs all Registry changes including differentiation, reprogramming, splits, and fuses.
 
 ## Requirements
 
@@ -14,19 +14,24 @@ occur outside the Proposal commit workflow.
 
 #### Scenario: Reprogram creates a Proposal
 - **WHEN** `mr reprogram` is executed
-- **THEN** a Proposal with `:kind :reprogram` is created and committed (emergency skips shadow step)
+- **THEN** a Proposal with `:kind :reprogram` is created and committed through the proposal workflow (emergency skips `:shadowing` only)
 
-### Requirement: Proposal lifecycle is draft → shadow → review → commit
-The system SHALL progress Proposals through four stages: `:draft`, `:shadowing`, `:reviewing`,
-`:approved`, `:committed`. A Proposal MAY be `:rejected` at the `:reviewing` stage.
+### Requirement: Proposal lifecycle is draft → shadow → review → approve → commit
+The system SHALL progress Proposals through five statuses: `:draft`, `:shadowing`,
+`:reviewing`, `:approved`, `:committed`. A Proposal MAY be `:rejected` from the
+`:reviewing` stage instead of advancing to `:approved`.
 
 #### Scenario: Proposal cannot skip review
 - **WHEN** a Proposal is in `:draft` status
-- **THEN** it cannot be committed until it passes through `:shadowing` and `:reviewing`
+- **THEN** it cannot be committed until it passes through `:shadowing`, `:reviewing`, and `:approved`
 
 #### Scenario: Rejected proposal is not committed
 - **WHEN** a Proposal is rejected at review
 - **THEN** its status is `:rejected` and no Registry mutations occur
+
+#### Scenario: Emergency reprogram skips shadowing but still records approval
+- **WHEN** `mr reprogram --emergency` is executed by an authorized human operator
+- **THEN** the Proposal bypasses `:shadowing`, records review and approval metadata, and commits without omitting the approval record
 
 ### Requirement: Evidence captures quantitative justification
 The system SHALL record Evidence with a Proposal including: traces analyzed, coverage rate,

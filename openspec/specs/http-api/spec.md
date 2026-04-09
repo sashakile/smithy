@@ -4,8 +4,8 @@ Define the DR HTTP API: the /v1/decide and /v1/decide/batch decision endpoints, 
 ## Requirements
 
 ### Requirement: POST /v1/decide accepts cell and input
-The system SHALL accept POST requests to `/v1/decide` with a JSON body containing exactly
-`cell` (string, cell-id) and `input` (object). Additional optional fields: `options.max_potency`,
+The system SHALL accept POST requests to `/v1/decide` with a JSON body containing required
+fields `cell` (string, cell-id) and `input` (object). Additional optional fields: `options.max_potency`,
 `options.timeout_ms`, `options.trace` (boolean).
 
 #### Scenario: Valid decide request returns decision
@@ -47,6 +47,14 @@ Partial failures SHALL be represented per-element; the batch SHALL NOT fail atom
 #### Scenario: Batch with one failed input returns partial success
 - **WHEN** a batch of 3 inputs is submitted and 1 fails schema validation
 - **THEN** response contains 2 successful decisions and 1 fault, all in positional order
+
+#### Scenario: Valid batch with all element faults still returns positional results
+- **WHEN** a batch envelope is valid but every input fails RECEIVE validation
+- **THEN** response is 200 and contains one fault result per input in positional order
+
+#### Scenario: Malformed batch envelope returns 400
+- **WHEN** `/v1/decide/batch` is called without a valid `cell` or with `inputs` that is not an array
+- **THEN** response is 400 with `{"fault": {"origin": "in", "kind": "schema/invalid-batch", ...}}`
 
 ### Requirement: POST /v1/observe records without cascade
 The system SHALL accept POST requests to `/v1/observe` to record a decision event in signaling

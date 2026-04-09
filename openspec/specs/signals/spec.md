@@ -3,9 +3,10 @@ Define signal collection (Trace, Span, Annotations), PII handling via redaction 
 
 ## Requirements
 
-### Requirement: Every pipeline execution produces a Trace
-The system SHALL record a Trace for every cascade execution, capturing the cell-id, potency,
-timestamp, Decision, and input. Traces SHALL be flushed after the cascade completes, not
+### Requirement: Every decide request produces one Trace
+The system SHALL record exactly one Trace for every cascade execution initiated by a decide
+request, capturing the cell-id, final potency, timestamp, Decision, and input. Stage-level
+detail SHALL be recorded in Spans. Traces SHALL be flushed after the cascade completes, not
 during pipeline stages.
 
 #### Scenario: Successful request produces a Trace
@@ -16,10 +17,11 @@ during pipeline stages.
 - **WHEN** a decide request results in a cascade fault
 - **THEN** a Trace is still written, recording the fault outcome
 
-### Requirement: Raw input stored by default; PII redacted by middleware
+### Requirement: Raw input stored by default; PII redacted on the signal-write path
 The system SHALL store raw input in Trace by default (`:store-raw-input` defaults to true),
 because `mr plan` requires raw inputs to generate Drools rules. PII fields SHALL be redacted
-via `wrap-pii-redaction` middleware BEFORE the trace is written.
+via mandatory `wrap-pii-redaction` middleware on the signal-write path BEFORE the trace is
+written.
 
 #### Scenario: Raw input is stored in Trace by default
 - **WHEN** `:store-raw-input` is not configured in Wiring
@@ -56,7 +58,8 @@ New features SHALL add namespaced keys to Annotations rather than modifying Trac
 ### Requirement: Prometheus metrics are emitted for every decide call
 The system SHALL emit the following Prometheus metrics for every cascade execution:
 `smithy_decide_seconds` (histogram), `smithy_decide_errors_total` (counter),
-`smithy_cascade_depth` (histogram), `smithy_potency_traffic` (counter).
+`smithy_cascade_depth` (histogram), `smithy_cost_dollars` (gauge),
+`smithy_potency_traffic` (counter).
 
 #### Scenario: Successful decide emits latency metric
 - **WHEN** a decide call completes at P1

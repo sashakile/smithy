@@ -12,7 +12,7 @@ but builds on concepts from earlier specs.
 | 5 | [registry](registry/spec.md) | Cell/Fate/Expression/Wiring storage and CAS updates |
 | 6 | [signals](signals/spec.md) | Traces, spans, annotations, and ISignalStore |
 | 7 | [middleware](middleware/spec.md) | Six-layer Ring interceptor stack |
-| 8 | [proposals](proposals/spec.md) | Change lifecycle: draft → shadow → review → commit |
+| 8 | [proposals](proposals/spec.md) | Change lifecycle: draft → shadow → review → approve → commit |
 | 9 | [mr-cli](mr-cli/spec.md) | CLI commands and workflows |
 | 10 | [http-api](http-api/spec.md) | DR HTTP API resource model |
 | 11 | [topology-adaptation](topology-adaptation/spec.md) | Autonomous split/fuse detection |

@@ -161,6 +161,7 @@ verb-resource model.
 | `mr plan --topology` | Analyze full component graph for split and fuse candidates |
 | `mr split <c> --into <a> <b>` | Manually propose a split |
 | `mr fuse <a> <b> --as <merged>` | Manually propose a fusion |
+| `mr review --topology <n>` | Review pending split or fuse proposal |
 | `mr topology` | Display component dependency graph with coupling scores |
 
 ### 3.3 Example Workflow: Day 1 → Day 30
@@ -234,7 +235,8 @@ Three-tier rollback:
 2. **Hot-Standby** — Previous implementation retained for configurable grace period (default:
    7 days). Rollback is instantaneous.
 3. **Manual Emergency Rollback** — `mr reprogram --emergency` bypasses shadow validation;
-   immediately escalates to P4. Requires reason.
+   an authorized operator approves at invocation time, then it immediately escalates to P4.
+   Requires reason.
 
 ```edn
 {:rollback {:circuit-breaker {:sample-rate 0.05 :threshold 0.90 :window-size 100}
@@ -254,18 +256,20 @@ Three strategies:
 
 ### 4.7 Middleware Architecture
 
-Six standard middleware layers (outermost first):
+Six standard stage middleware layers (outermost first):
 
 | Order | Middleware | Responsibility |
 |---|---|---|
 | 1 | wrap-trace-context | Creates/propagates OTel span per stage |
 | 2 | wrap-structured-logging | Logs entry/exit via μ/log |
 | 3 | wrap-metrics | Records stage duration histograms and error counters |
-| 4 | wrap-error-enrichment | Normalizes exceptions to canonical error map |
+| 4 | wrap-cascade-bridge | Sets :cascade? true on exhausted :decide retries |
 | 5 | wrap-retry | Exponential backoff for :transient errors; respects Retry-After |
-| 6 | wrap-cascade-bridge | Sets :cascade? true on exhausted :decide retries |
+| 6 | wrap-error-enrichment | Normalizes exceptions to canonical error map before retry evaluates the fault |
 
-Custom middleware declared in smithy.edn via `:insert-before`, `:insert-after`, or `:replace`.
+Signal persistence also applies mandatory `wrap-pii-redaction` before Trace writes when raw
+input storage is enabled. Custom middleware declared in smithy.edn via `:insert-before`,
+`:insert-after`, or `:replace`.
 
 ### 4.8 Autonomous Topology Adaptation
 

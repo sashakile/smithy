@@ -309,7 +309,8 @@ with sufficient confidence, or returns the best sub-threshold Decision.
 ```
 
 `:store-raw-input` defaults to TRUE — `mr plan` needs raw inputs to generate Drools rules.
-PII-sensitive fields redacted via `wrap-pii-redaction` middleware before the trace is written.
+PII-sensitive fields are redacted via mandatory `wrap-pii-redaction` on the signal-write path
+before the trace is written.
 
 ### 5.2 Span — 6 fields (Performance)
 
@@ -400,7 +401,7 @@ Implementations: SQLite (dev), PostgreSQL/TimescaleDB (prod), in-memory (test).
 ## 7. Proposals
 
 All changes (differentiate, reprogram, split, fuse) are Proposals: a diff + evidence, with
-lifecycle: `draft → shadow → review → commit`.
+lifecycle: `draft → shadow → review → approve → commit`.
 
 ```clojure
 (def Proposal

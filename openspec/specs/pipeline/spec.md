@@ -48,15 +48,16 @@ to the ACT stage. RECEIVE, DECIDE, and EMIT SHALL be pure functions.
 - **THEN** it executes each declared effect and returns an enriched Decision
 
 ### Requirement: EMIT validates output against genome schema
-The system SHALL validate the DECIDE output against the component's `:out` genome schema.
-An output that fails schema validation SHALL produce `{:fault {:origin :out :kind :schema/output-violation}}`.
+The system SHALL validate the final decision value presented to callers after ACT completes
+against the component's `:out` genome schema. An output that fails schema validation SHALL
+produce `{:fault {:origin :out :kind :schema/output-violation}}`.
 
 #### Scenario: Schema-valid output passes EMIT
-- **WHEN** DECIDE produces a value conforming to the genome `:out` schema
+- **WHEN** the final value after ACT conforms to the genome `:out` schema
 - **THEN** EMIT returns `{:ok {:value <output> :confidence <n>}}`
 
 #### Scenario: Schema-invalid output is caught at EMIT
-- **WHEN** DECIDE produces a value that does not conform to the genome `:out` schema
+- **WHEN** the final value after ACT does not conform to the genome `:out` schema
 - **THEN** EMIT returns `{:fault {:origin :out :kind :schema/output-violation :retry? false}}` and an alert is emitted
 
 ### Requirement: Pipeline composes stages with thread-first
