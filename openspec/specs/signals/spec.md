@@ -7,7 +7,8 @@ Define signal collection (Trace, Span, Annotations), PII handling via redaction 
 The system SHALL record exactly one Trace for every cascade execution initiated by a decide
 request, capturing the cell-id, final potency, timestamp, Decision, and input. Stage-level
 detail SHALL be recorded in Spans. Traces SHALL be flushed after the cascade completes, not
-during pipeline stages.
+during pipeline stages. Trace flush SHALL be guarded by the cascade execution epoch so a closed
+epoch can flush at most one terminal Trace.
 
 #### Scenario: Successful request produces a Trace
 - **WHEN** a decide request completes successfully
@@ -16,6 +17,10 @@ during pipeline stages.
 #### Scenario: Failed request produces a Trace with fault
 - **WHEN** a decide request results in a cascade fault
 - **THEN** a Trace is still written, recording the fault outcome
+
+#### Scenario: Closed epoch suppresses duplicate traces
+- **WHEN** a timeout result is returned and an in-flight potency attempt finishes afterward
+- **THEN** no second Trace is persisted for that decide request
 
 ### Requirement SIG-002 [Priority: P1]: Raw input stored by default; PII redacted on the signal-write path
 The system SHALL store raw input in Trace by default (`:store-raw-input` defaults to true),

@@ -46,6 +46,8 @@ Partial failures SHALL be represented per-element; the batch SHALL NOT fail atom
 The default maximum batch size SHALL be 100 inputs, the default maximum request body size
 SHALL be 1 MiB, and batch execution SHALL honor the same effective timeout budget as a
 single `/v1/decide` call unless `options.timeout_ms` is set on the request envelope.
+Batch execution SHALL assign each element a stable positional index from the request order and
+SHALL preserve that positional index in the response regardless of scheduling.
 
 #### Scenario: Batch with one failed input returns partial success
 - **WHEN** a batch of 3 inputs is submitted and 1 fails schema validation
@@ -89,3 +91,18 @@ milliseconds.
 #### Scenario: Degraded DR returns 503
 - **WHEN** Signal Store is unavailable
 - **THEN** GET /v1/health returns 503 with the degraded subsystem identified
+
+### Requirement API-006 [Priority: P2]: Batch scheduler is bounded and cancellation-safe
+The system SHALL execute batch elements independently with bounded parallelism configured by the
+server. Each element SHALL own an independent cascade execution epoch. When the batch timeout
+budget expires, elements with terminal results already committed SHALL retain them; elements whose
+epochs are still open SHALL be closed and rendered as positional timeout Faults. A closed batch
+element epoch SHALL suppress late writes and late response replacement for that element.
+
+#### Scenario: Parallel scheduling preserves positional determinism
+- **WHEN** batch elements 2 and 3 finish before element 1 under bounded parallel execution
+- **THEN** the response still returns results in input order 1, 2, 3
+
+#### Scenario: Timed-out element cannot overwrite timeout Fault
+- **WHEN** an unfinished batch element completes after the batch timeout has closed its epoch
+- **THEN** its late completion is discarded and the element remains a timeout Fault in the final response

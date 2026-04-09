@@ -51,14 +51,14 @@ deterministic associative fold over candidate results. The combine function SHAL
 (3) otherwise `{:escalate ...}` over terminal faults,
 (4) otherwise the terminal Fault with the highest deterministic precedence. Fault precedence
 SHALL be ordered by: `:retry? false` before `:retry? true`, then lower potency before higher
-potency, then stable expression registration order within a potency level. Ties between Decisions
-with equal confidence SHALL be broken deterministically by stable expression order within a potency
-level and then by lower potency before higher potency across levels. The fold SHALL define an
-identity element representing "no candidate yet".
+potency, then ascending immutable `:registration-order` within a potency level. Ties between
+Decisions with equal confidence SHALL be broken deterministically by ascending immutable
+`:registration-order` within a potency level and then by lower potency before higher potency
+across levels. The fold SHALL define an identity element representing "no candidate yet".
 
 #### Scenario: Equal-confidence decisions resolve deterministically
 - **WHEN** two expressions at the same potency both return confidence 0.90
-- **THEN** cascade selects the earlier expression in stable registration order
+- **THEN** cascade selects the expression with the lower immutable `:registration-order`
 
 #### Scenario: Fold identity does not affect the result
 - **WHEN** candidate reduction begins from the empty candidate
@@ -101,3 +101,19 @@ associativity and identity so regrouping or parallel reduction cannot change sel
 #### Scenario: Candidate fold remains stable under regrouping
 - **WHEN** candidate results are reduced as `(combine a (combine b c))` and `((combine a b) c)`
 - **THEN** both reductions yield the same selected candidate
+
+### Requirement CAS-009 [Priority: P1]: Cascade timeout closes the execution epoch
+The system SHALL assign each cascade execution a unique execution epoch. When timeout,
+client cancellation, or early success terminates the cascade, that epoch becomes closed.
+Handlers, retry loops, ACT effects, EMIT, and trace flushes associated with a closed epoch
+SHALL NOT publish new externally visible results. In-flight work MAY continue internally until
+cooperative cancellation is observed, but any late completion after epoch closure SHALL be
+discarded rather than persisted or returned.
+
+#### Scenario: Late ACT completion is discarded after timeout
+- **WHEN** cascade times out after P2 completes and an in-flight P3 ACT finishes later
+- **THEN** the P3 completion does not execute external effects, does not flush a trace, and does not replace the timeout result
+
+#### Scenario: Early confident result closes later potency attempts
+- **WHEN** P1 returns a threshold-meeting Decision before P2 starts
+- **THEN** the cascade epoch closes immediately after the P1 result is committed and no later potency attempt publishes a competing result

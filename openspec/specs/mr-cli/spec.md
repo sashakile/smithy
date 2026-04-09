@@ -86,6 +86,10 @@ All reprogram calls SHALL require a `--reason` argument.
 - **WHEN** `mr reprogram --emergency` is called without `--approved-by` or `--approval-reason`
 - **THEN** mr reprogram exits with an error requesting the missing approval metadata
 
+#### Scenario: Emergency reprogram persists approval before potency mutation
+- **WHEN** `mr reprogram --emergency` succeeds
+- **THEN** the Proposal records `approved-by`, `approved-at`, and `approval-reason` in the same atomic transition that commits the RegistryDiff updating Fate.potency
+
 ### Requirement CLI-005 [Priority: P1]: mr shadow runs parallel shadow deployment
 The system SHALL support shadow deployment via `mr shadow <component> --from <p> --to <p>`.
 Three strategies SHALL be supported: full (100% sample), sampled (default 10%), and

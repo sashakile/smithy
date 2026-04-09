@@ -14,11 +14,18 @@ The system SHALL store component data as four independent maps keyed by cell-id:
 
 ### Requirement REG-002 [Priority: P1]: Expressions stored as vectors per potency level
 The system SHALL store expressions as `{[cell-id potency] -> [Expression]}` (vector, not scalar).
-Multiple expressions at the same potency level SHALL coexist without collision.
+Multiple expressions at the same potency level SHALL coexist without collision. Each
+Expression SHALL carry an immutable `:registration-order` assigned from a monotonically
+increasing per-cell/per-potency sequence at commit time. `:registration-order` SHALL be unique
+within a `[cell-id, potency]` vector and SHALL NOT be rewritten by later Registry updates.
 
 #### Scenario: Two expressions at same potency coexist
 - **WHEN** two expressions are registered for the same cell-id and potency level
 - **THEN** both are stored and both are returned by resolve for that potency level
+
+#### Scenario: Registration order remains stable
+- **WHEN** a later RegistryDiff adds or removes expressions for an existing `[cell-id, potency]`
+- **THEN** existing expressions retain their original `:registration-order` values and newly added expressions receive larger values
 
 ### Requirement REG-003 [Priority: P1]: Fate updates are atomic with CAS
 The system SHALL implement `update-fate!` with compare-and-swap semantics using `Fate.version`
