@@ -29,7 +29,9 @@ potency levels. Only the DECIDE implementation SHALL vary by potency.
 
 ### Requirement: Differentiation direction is P4 to P1
 The system SHALL define differentiation as movement from higher potency (P4) to lower potency
-(P1). Differentiation SHALL make a component cheaper, faster, and less flexible.
+(P1). Differentiation SHALL preserve genome compatibility while selecting an implementation with
+lower expected cost and latency than the pre-differentiation potency, as evidenced by the
+promotion thresholds defined in the planning and shadow workflow.
 
 #### Scenario: Differentiation moves potency downward
 - **WHEN** `mr differentiate` is called with `--to P1`
@@ -37,7 +39,8 @@ The system SHALL define differentiation as movement from higher potency (P4) to 
 
 ### Requirement: Reprogramming direction is P1 to P4
 The system SHALL define reprogramming as movement from lower potency (P1) to higher potency
-(P4). Reprogramming SHALL restore flexibility at the cost of higher latency and cost.
+(P4). Reprogramming SHALL restore access to a higher-flexibility implementation while accepting
+higher expected cost and latency than the pre-reprogramming potency.
 
 #### Scenario: Reprogramming moves potency upward
 - **WHEN** `mr reprogram` is called with `--to P4`
@@ -50,4 +53,4 @@ P4 2–30s ~$0.50/call. These are illustrative order-of-magnitude targets, not h
 
 #### Scenario: P1 is faster than P4
 - **WHEN** the same input is processed at P1 and at P4
-- **THEN** P1 latency is expected to be orders of magnitude lower than P4
+- **THEN** the documented expected latency range for P1 remains lower than the documented expected latency range for P4

@@ -1,0 +1,1 @@
+Normalized OpenSpec requirements after specification evaluation. Resolved topology auto-commit drift by coercing unsupported true values to false, defined explicit planning and shadow thresholds, bounded batch API size/time behavior, and specified fail-closed signal redaction semantics when policy resolution fails.

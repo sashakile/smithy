@@ -1,0 +1,1 @@
+Tighten OpenSpec requirements after specification evaluation: resolve topology auto-commit policy drift, define explicit thresholds for planning/topology heuristics, add API boundary conditions for batch requests, and specify redaction failure behavior so the suite is implementation-ready.

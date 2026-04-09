@@ -43,6 +43,9 @@ response SHALL include `{"fault": {"origin": ..., "kind": ..., "message": ...}}`
 ### Requirement: POST /v1/decide/batch accepts array input
 The system SHALL accept POST requests to `/v1/decide/batch` with `{"cell": ..., "inputs": [...]}`.
 Partial failures SHALL be represented per-element; the batch SHALL NOT fail atomically.
+The default maximum batch size SHALL be 100 inputs, the default maximum request body size
+SHALL be 1 MiB, and batch execution SHALL honor the same effective timeout budget as a
+single `/v1/decide` call unless `options.timeout_ms` is set on the request envelope.
 
 #### Scenario: Batch with one failed input returns partial success
 - **WHEN** a batch of 3 inputs is submitted and 1 fails schema validation
@@ -55,6 +58,14 @@ Partial failures SHALL be represented per-element; the batch SHALL NOT fail atom
 #### Scenario: Malformed batch envelope returns 400
 - **WHEN** `/v1/decide/batch` is called without a valid `cell` or with `inputs` that is not an array
 - **THEN** response is 400 with `{"fault": {"origin": "in", "kind": "schema/invalid-batch", ...}}`
+
+#### Scenario: Oversized batch is rejected
+- **WHEN** `/v1/decide/batch` is called with more than 100 inputs or a request body larger than 1 MiB
+- **THEN** response is 413 with `{"fault": {"origin": "in", "kind": "schema/batch-too-large", ...}}`
+
+#### Scenario: Batch timeout returns positional timeout faults
+- **WHEN** batch execution exceeds the effective timeout budget after some elements have completed
+- **THEN** completed elements keep their positional results and unfinished elements return `{"fault": {"origin": "decide", "kind": "cascade/timeout", ...}}` in positional order
 
 ### Requirement: POST /v1/observe records without cascade
 The system SHALL accept POST requests to `/v1/observe` to record a decision event in signaling

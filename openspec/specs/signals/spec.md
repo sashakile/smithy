@@ -21,7 +21,9 @@ during pipeline stages.
 The system SHALL store raw input in Trace by default (`:store-raw-input` defaults to true),
 because `mr plan` requires raw inputs to generate Drools rules. PII fields SHALL be redacted
 via mandatory `wrap-pii-redaction` middleware on the signal-write path BEFORE the trace is
-written.
+written. If raw input storage is enabled and the effective redaction policy is missing or invalid,
+the system SHALL fail closed by refusing to persist raw input and SHALL instead persist only the
+input hash with an Annotation explaining the redaction-policy failure.
 
 #### Scenario: Raw input is stored in Trace by default
 - **WHEN** `:store-raw-input` is not configured in Wiring
@@ -34,6 +36,10 @@ written.
 #### Scenario: Opt-out stores only input hash
 - **WHEN** `:store-raw-input false` is set in Wiring
 - **THEN** Trace.input is nil and Annotations records the input hash for deduplication
+
+#### Scenario: Invalid redaction policy fails closed
+- **WHEN** `:store-raw-input` is true and the configured redaction policy cannot be resolved
+- **THEN** Trace.input is nil, only the input hash is persisted, and Annotations records `:pii.redaction-policy-invalid true`
 
 ### Requirement: Signal Store has five operations
 The system SHALL implement ISignalStore with exactly five operations: `append!`, `query`,

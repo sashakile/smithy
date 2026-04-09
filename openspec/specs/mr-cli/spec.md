@@ -9,7 +9,10 @@ topology operations, runtime inspection, initialization, and the output duality
 The system SHALL analyze a component's signaling history via `mr plan <component>` and propose
 a differentiation target. The plan SHALL include coverage rate, projected cost savings, and
 generated artifacts (DRL rules, DMN tables, ONNX model spec). A minimum of 1,000 traces SHALL
-be required before a plan is generated.
+be required before a plan is generated. A potency target SHALL be considered feasible only if it
+meets all configured promotion thresholds: agreement rate ≥ 0.95 against the current potency on
+the evaluation corpus, coverage rate ≥ 0.90, and projected daily savings > 0. The default target
+selection rule SHALL choose the lowest potency that satisfies all three thresholds.
 
 #### Scenario: Plan requires minimum trace count
 - **WHEN** `mr plan` is run on a component with fewer than 1,000 traces
@@ -17,7 +20,7 @@ be required before a plan is generated.
 
 #### Scenario: Plan proposes lowest feasible potency
 - **WHEN** `mr plan` finds that P1 coverage is 73% and P2 coverage is 91%
-- **THEN** the proposal targets P1 with P2 shown as an intermediate option
+- **THEN** the proposal targets P2 because P1 fails the default 90% coverage threshold and P2 is the lowest feasible potency
 
 #### Scenario: Plan generates human-readable Drools artifacts
 - **WHEN** `mr plan` targets a Drools P1 differentiation
@@ -40,11 +43,17 @@ available actions (`approve`, `reject`).
 ### Requirement: mr differentiate executes a validated differentiation
 The system SHALL execute a differentiation via `mr differentiate <component> --to <potency>`
 only after a shadow deployment meets the configured agreement threshold. Differentiation SHALL
-update the component's Fate.potency in the Registry.
+update the component's Fate.potency in the Registry. Unless overridden in configuration,
+the required shadow thresholds SHALL be agreement rate ≥ 0.95, no severity `:fatal`
+regressions on the shadow corpus, and projected daily savings > 0.
 
 #### Scenario: Differentiation requires shadow validation
 - **WHEN** `mr differentiate` is called without a completed shadow deployment
 - **THEN** mr differentiate exits with an error requesting shadow validation first
+
+#### Scenario: Differentiation rejects insufficient agreement
+- **WHEN** a completed shadow deployment reports agreement 0.93 against a required threshold of 0.95
+- **THEN** `mr differentiate` exits with an error indicating the agreement threshold was not met
 
 #### Scenario: Differentiation triggers automatic regression run
 - **WHEN** `mr differentiate` completes successfully
@@ -67,7 +76,9 @@ All reprogram calls SHALL require a `--reason` argument.
 ### Requirement: mr shadow runs parallel shadow deployment
 The system SHALL support shadow deployment via `mr shadow <component> --from <p> --to <p>`.
 Three strategies SHALL be supported: full (100% sample), sampled (default 10%), and
-budget-capped (auto-calculated sample rate from `--budget`).
+budget-capped (auto-calculated sample rate from `--budget`). The computed sample rate SHALL be
+clamped to the range `(0, 1]`, and budget-capped planning SHALL report the estimated duration,
+expected sample count, and 95% Wilson confidence interval for agreement.
 
 #### Scenario: Default shadow uses 10% sample rate
 - **WHEN** `mr shadow` is called without `--sample-rate` or `--budget`

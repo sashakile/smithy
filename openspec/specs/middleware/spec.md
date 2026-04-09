@@ -58,11 +58,17 @@ potency level.
 ### Requirement: Signal persistence uses mandatory PII-redaction middleware
 The system SHALL apply `wrap-pii-redaction` on the signal-write path before any Trace is
 persisted to the Signal Store. This middleware SHALL be mandatory whenever raw input is
-stored and SHALL use the component's configured redaction fields.
+stored and SHALL use the component's configured redaction fields. If the redaction policy is
+missing, malformed, or cannot be loaded, `wrap-pii-redaction` SHALL fail closed by stripping
+raw input, preserving only the input hash, and annotating the trace with the policy failure.
 
 #### Scenario: Trace write redacts configured fields
 - **WHEN** a trace is flushed with raw input and Wiring configures `[:email :ssn]` as redacted fields
 - **THEN** `wrap-pii-redaction` replaces those fields before `append!` is called on the Signal Store
+
+#### Scenario: Missing redaction policy strips raw input
+- **WHEN** raw input storage is enabled but the redaction policy is missing or malformed
+- **THEN** `wrap-pii-redaction` removes raw input from the trace, stores only the input hash, and records a redaction-policy failure annotation
 
 ### Requirement: Custom middleware is declared in smithy.edn
 The system SHALL support declaring custom middleware in smithy.edn via `:insert-before`,
