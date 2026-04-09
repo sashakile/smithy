@@ -3,7 +3,7 @@ Define the IEngine protocol (init-engine + invoke), the shared stage result cont
 
 ## Requirements
 
-### Requirement: IEngine protocol has exactly two methods
+### Requirement ENG-001 [Priority: P1]: IEngine protocol has exactly two methods
 The system SHALL define the IEngine protocol with exactly two methods: `init-engine` and `invoke`.
 `init-engine` SHALL be called once at registration; `invoke` SHALL be called on every request.
 
@@ -15,17 +15,18 @@ The system SHALL define the IEngine protocol with exactly two methods: `init-eng
 - **WHEN** cascade selects an expression at a potency level
 - **THEN** `invoke` is called with the stored engine-state and the normalized input
 
-### Requirement: invoke returns stage results, never bare Decisions
+### Requirement ENG-002 [Priority: P1]: invoke returns stage results, never bare Decisions
 The system SHALL require that `invoke` implementations return `{:ok Decision}` on success.
-Infrastructure failures MAY be thrown as exceptions, which middleware converts to `{:fault ...}`,
-or MAY be returned directly as `{:fault ...}` / `{:escalate ...}` when the implementation can
-classify them precisely. `invoke` SHALL NOT return a bare Decision.
+When an implementation can classify an infrastructure failure precisely, it SHALL return
+`{:fault ...}` or `{:escalate ...}` directly. When an implementation encounters an unclassified
+runtime failure, it SHALL throw an exception, which middleware SHALL convert to `{:fault ...}`.
+`invoke` SHALL NOT return a bare Decision.
 
 #### Scenario: Engine exception is caught by middleware
 - **WHEN** `invoke` throws an exception (e.g., Drools compilation error)
 - **THEN** middleware catches it and produces `{:fault {:origin :decide :kind :runtime/exception ...}}`
 
-### Requirement: Five built-in engines are provided
+### Requirement ENG-003 [Priority: P2]: Five built-in engines are provided
 The system SHALL provide five built-in engine implementations: `:drools`, `:onnx`, `:llm`,
 `:lookup`, `:clojure`.
 
@@ -49,7 +50,7 @@ The system SHALL provide five built-in engine implementations: `:drools`, `:onnx
 - **WHEN** the `:clojure` engine is initialized with a qualified symbol
 - **THEN** it resolves the var via `requiring-resolve` and calls `(f input ctx)` on each invocation, expecting a stage result map in return
 
-### Requirement: genome->facts bridges Malli schemas to Drools facts
+### Requirement ENG-004 [Priority: P2]: genome->facts bridges Malli schemas to Drools facts
 The system SHALL generate a `genome->facts` mapping at build time via `mr build-facts <cell-id>`
 that converts Malli schema types to Java types for Drools working memory.
 

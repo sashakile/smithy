@@ -3,7 +3,7 @@ Define the DR HTTP API: the /v1/decide and /v1/decide/batch decision endpoints, 
 
 ## Requirements
 
-### Requirement: POST /v1/decide accepts cell and input
+### Requirement API-001 [Priority: P1]: POST /v1/decide accepts cell and input
 The system SHALL accept POST requests to `/v1/decide` with a JSON body containing required
 fields `cell` (string, cell-id) and `input` (object). Additional optional fields: `options.max_potency`,
 `options.timeout_ms`, `options.trace` (boolean).
@@ -16,7 +16,7 @@ fields `cell` (string, cell-id) and `input` (object). Additional optional fields
 - **WHEN** POST /v1/decide is called with a cell-id not registered in the Registry
 - **THEN** response is 404 with `{"fault": {"origin": "in", "kind": "cell/not-found", ...}}`
 
-### Requirement: Fault is the universal error type
+### Requirement API-002 [Priority: P1]: Fault is the universal error type
 The system SHALL use Fault as the error type for all API error responses. Every non-2xx
 response SHALL include `{"fault": {"origin": ..., "kind": ..., "message": ...}}`.
 
@@ -40,7 +40,7 @@ response SHALL include `{"fault": {"origin": ..., "kind": ..., "message": ...}}`
 - **WHEN** DR is not yet ready or is shutting down
 - **THEN** response is 503
 
-### Requirement: POST /v1/decide/batch accepts array input
+### Requirement API-003 [Priority: P1]: POST /v1/decide/batch accepts array input
 The system SHALL accept POST requests to `/v1/decide/batch` with `{"cell": ..., "inputs": [...]}`.
 Partial failures SHALL be represented per-element; the batch SHALL NOT fail atomically.
 The default maximum batch size SHALL be 100 inputs, the default maximum request body size
@@ -67,7 +67,7 @@ single `/v1/decide` call unless `options.timeout_ms` is set on the request envel
 - **WHEN** batch execution exceeds the effective timeout budget after some elements have completed
 - **THEN** completed elements keep their positional results and unfinished elements return `{"fault": {"origin": "decide", "kind": "cascade/timeout", ...}}` in positional order
 
-### Requirement: POST /v1/observe records without cascade
+### Requirement API-004 [Priority: P2]: POST /v1/observe records without cascade
 The system SHALL accept POST requests to `/v1/observe` to record a decision event in signaling
 history without routing through the cascade. This is used during observation-only migration.
 
@@ -75,9 +75,12 @@ history without routing through the cascade. This is used during observation-onl
 - **WHEN** POST /v1/observe is called with a decision event
 - **THEN** the trace is recorded in signal history and no pipeline stages are executed
 
-### Requirement: GET /v1/health returns DR status
-The system SHALL expose GET /v1/health returning 200 when all subsystems are healthy and 503
-when any required subsystem is degraded.
+### Requirement API-005 [Priority: P1]: GET /v1/health returns DR status
+The system SHALL expose GET /v1/health returning 200 when all required subsystem probes pass
+and 503 when any required subsystem probe fails. Required probes SHALL include Registry read,
+Signal Store append capability, and Cascade execution readiness. The response SHALL identify
+each required subsystem with `status` in `{healthy, degraded}` and a probe latency in
+milliseconds.
 
 #### Scenario: Healthy DR returns 200
 - **WHEN** all DR subsystems (Registry, Signal Store, Cascade) are operational

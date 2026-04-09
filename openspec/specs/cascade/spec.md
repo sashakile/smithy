@@ -3,7 +3,7 @@ Define the cascade orchestration mechanism that tries potency levels in ascendin
 
 ## Requirements
 
-### Requirement: Cascade lives outside the pipeline
+### Requirement CAS-001 [Priority: P1]: Cascade lives outside the pipeline
 The system SHALL implement cascade as an orchestrator that calls the pipeline at successive
 potency levels. Cascade SHALL NOT be a pipeline stage. Each pipeline invocation SHALL be
 independently testable.
@@ -12,7 +12,7 @@ independently testable.
 - **WHEN** a single pipeline is invoked directly at a specific potency level
 - **THEN** it executes RECEIVE→DECIDE→ACT→EMIT without cascade logic
 
-### Requirement: Cascade tries potency levels in ascending order
+### Requirement CAS-002 [Priority: P1]: Cascade tries potency levels in ascending order
 The system SHALL try potency levels from lowest (P1) up to the component's base potency,
 stopping when a Decision meets or exceeds the confidence threshold. Levels in the `:cascade :skip`
 set SHALL be omitted. `{:escalate ...}` results from the pipeline SHALL advance Cascade to the
@@ -30,7 +30,7 @@ next eligible potency level without being treated as terminal faults.
 - **WHEN** a P2 pipeline attempt returns `{:escalate {:kind :retry/exhausted ...}}`
 - **THEN** cascade records that result and tries P3 next if P3 is eligible
 
-### Requirement: Cascade returns best sub-threshold Decision on exhaustion
+### Requirement CAS-003 [Priority: P1]: Cascade returns best sub-threshold Decision on exhaustion
 The system SHALL return the highest-confidence Decision seen across all potency levels when
 no level meets the threshold, rather than returning a Fault. A Fault SHALL only be returned
 when all potency levels produce infrastructure faults.
@@ -43,16 +43,18 @@ when all potency levels produce infrastructure faults.
 - **WHEN** every potency level returns `{:fault ...}` due to infrastructure failure
 - **THEN** cascade returns `{:fault {:origin :decide :kind :cascade/exhausted :retry? false}}`
 
-### Requirement: Candidate selection is a deterministic associative fold
+### Requirement CAS-004 [Priority: P1]: Candidate selection is a deterministic associative fold
 The system SHALL combine results within a potency level and across potency levels using a
 deterministic associative fold over candidate results. The combine function SHALL prefer:
 (1) any threshold-meeting Decision over all other candidates,
 (2) otherwise the highest-confidence Decision,
 (3) otherwise `{:escalate ...}` over terminal faults,
-(4) otherwise the most informative terminal Fault. Ties between Decisions with equal confidence
-SHALL be broken deterministically by stable expression order within a potency level and then by
-lower potency before higher potency across levels. The fold SHALL define an identity element
-representing "no candidate yet".
+(4) otherwise the terminal Fault with the highest deterministic precedence. Fault precedence
+SHALL be ordered by: `:retry? false` before `:retry? true`, then lower potency before higher
+potency, then stable expression registration order within a potency level. Ties between Decisions
+with equal confidence SHALL be broken deterministically by stable expression order within a potency
+level and then by lower potency before higher potency across levels. The fold SHALL define an
+identity element representing "no candidate yet".
 
 #### Scenario: Equal-confidence decisions resolve deterministically
 - **WHEN** two expressions at the same potency both return confidence 0.90
@@ -62,7 +64,7 @@ representing "no candidate yet".
 - **WHEN** candidate reduction begins from the empty candidate
 - **THEN** combining the empty candidate with any actual result yields the same result
 
-### Requirement: Multiple expressions per potency level are all tried
+### Requirement CAS-005 [Priority: P1]: Multiple expressions per potency level are all tried
 The system SHALL store expressions as a vector per `[cell-id, potency]` pair. Cascade SHALL
 try all expressions at a potency level before escalating to the next level.
 
@@ -70,7 +72,7 @@ try all expressions at a potency level before escalating to the next level.
 - **WHEN** a cell has two P1 expressions (e.g., two Drools rule sets)
 - **THEN** cascade invokes both and uses the one with the highest confidence
 
-### Requirement: Cascade uses CAS for concurrent Fate updates
+### Requirement CAS-006 [Priority: P1]: Cascade uses CAS for concurrent Fate updates
 The system SHALL use compare-and-swap (CAS) semantics on `Fate.version` when updating potency
 or threshold. Callers SHALL retry on version mismatch.
 
@@ -78,7 +80,7 @@ or threshold. Callers SHALL retry on version mismatch.
 - **WHEN** two callers attempt to update Fate simultaneously with the same expected version
 - **THEN** one succeeds and one receives a version-mismatch error and retries
 
-### Requirement: Cascade timeout is configurable
+### Requirement CAS-007 [Priority: P2]: Cascade timeout is configurable
 The system SHALL support a configurable `:cascade :timeout-ms` (default: 30000ms). If the
 cascade exceeds this timeout, the highest-confidence result obtained so far SHALL be returned.
 If no potency level has completed before the timeout, cascade SHALL return
@@ -92,7 +94,7 @@ If no potency level has completed before the timeout, cascade SHALL return
 - **WHEN** cascade timeout is reached before P1 produces any Decision or Fault
 - **THEN** cascade returns `{:fault {:origin :decide :kind :cascade/timeout :retry? true}}`
 
-### Requirement: Candidate fold laws are property-tested
+### Requirement CAS-008 [Priority: P2]: Candidate fold laws are property-tested
 The system SHALL verify the candidate combine operation with property-based tests for
 associativity and identity so regrouping or parallel reduction cannot change selection results.
 
