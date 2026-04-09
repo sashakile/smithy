@@ -3,7 +3,7 @@ Define signal collection (Trace, Span, Annotations), PII handling via redaction 
 
 ## Requirements
 
-### Requirement: Every decide request produces one Trace
+### Requirement SIG-001 [Priority: P1]: Every decide request produces one Trace
 The system SHALL record exactly one Trace for every cascade execution initiated by a decide
 request, capturing the cell-id, final potency, timestamp, Decision, and input. Stage-level
 detail SHALL be recorded in Spans. Traces SHALL be flushed after the cascade completes, not
@@ -17,7 +17,7 @@ during pipeline stages.
 - **WHEN** a decide request results in a cascade fault
 - **THEN** a Trace is still written, recording the fault outcome
 
-### Requirement: Raw input stored by default; PII redacted on the signal-write path
+### Requirement SIG-002 [Priority: P1]: Raw input stored by default; PII redacted on the signal-write path
 The system SHALL store raw input in Trace by default (`:store-raw-input` defaults to true),
 because `mr plan` requires raw inputs to generate Drools rules. PII fields SHALL be redacted
 via mandatory `wrap-pii-redaction` middleware on the signal-write path BEFORE the trace is
@@ -41,7 +41,7 @@ input hash with an Annotation explaining the redaction-policy failure.
 - **WHEN** `:store-raw-input` is true and the configured redaction policy cannot be resolved
 - **THEN** Trace.input is nil, only the input hash is persisted, and Annotations records `:pii.redaction-policy-invalid true`
 
-### Requirement: Signal Store has five operations
+### Requirement SIG-003 [Priority: P1]: Signal Store has five operations
 The system SHALL implement ISignalStore with exactly five operations: `append!`, `query`,
 `count-by`, `purge!`, and `export`. All storage backends SHALL implement this protocol.
 
@@ -53,7 +53,7 @@ The system SHALL implement ISignalStore with exactly five operations: `append!`,
 - **WHEN** DR is configured with a PostgreSQL connection string
 - **THEN** PostgreSQL with TimescaleDB hypertables is used with 90-day raw retention
 
-### Requirement: Annotations extend signals via namespaced keys
+### Requirement SIG-004 [Priority: P2]: Annotations extend signals via namespaced keys
 The system SHALL extend signal metadata via namespaced keys in the Annotations open map.
 New features SHALL add namespaced keys to Annotations rather than modifying Trace or Span schemas.
 
@@ -61,7 +61,7 @@ New features SHALL add namespaced keys to Annotations rather than modifying Trac
 - **WHEN** a component has been analyzed for topology adaptation
 - **THEN** `:topology.cluster-id` and `:topology.reasoning-fingerprint` are present in Annotations.data
 
-### Requirement: Prometheus metrics are emitted for every decide call
+### Requirement SIG-005 [Priority: P2]: Prometheus metrics are emitted for every decide call
 The system SHALL emit the following Prometheus metrics for every cascade execution:
 `smithy_decide_seconds` (histogram), `smithy_decide_errors_total` (counter),
 `smithy_cascade_depth` (histogram), `smithy_cost_dollars` (gauge),

@@ -3,6 +3,18 @@
 Recommended reading order for new contributors. Each spec is self-contained
 but builds on concepts from earlier specs.
 
+## Requirement Conventions
+
+Each requirement is identified with a stable ID and a priority marker in the heading:
+`### Requirement <ID> [Priority: Pn]: ...`.
+
+- The requirement statement traces to the stakeholder need described in the spec's `Purpose`.
+- The scenarios immediately below each requirement are the normative verification cases for that requirement.
+- Priority markers indicate implementation sequencing guidance:
+  - `P1` critical path or safety/governance invariant
+  - `P2` important but not blocking the first end-to-end slice
+  - `P3` informative, optimization, or documentation-oriented behavior
+
 | # | Spec | Description |
 |---|---|---|
 | 1 | [potency-model](potency-model/spec.md) | P1–P4 levels, differentiation, reprogramming |

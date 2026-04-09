@@ -3,7 +3,7 @@ Define the six-layer standard stage middleware stack, the Ring interceptor compo
 
 ## Requirements
 
-### Requirement: Middleware follows Ring interceptor pattern
+### Requirement MID-001 [Priority: P1]: Middleware follows Ring interceptor pattern
 The system SHALL implement middleware as `(handler -> handler)` functions that compose via
 `comp`. The middleware stack SHALL wrap each pipeline stage individually (stage-level
 granularity), not the full pipeline. Each wrapped handler SHALL preserve the stage result
@@ -13,7 +13,7 @@ carrier `{:ok ...} | {:fault ...} | {:escalate ...}`.
 - **WHEN** custom middleware is applied to the `:decide` stage
 - **THEN** it does not affect RECEIVE, ACT, or EMIT execution
 
-### Requirement: Six standard stage middleware layers execute in order
+### Requirement MID-002 [Priority: P1]: Six standard stage middleware layers execute in order
 The system SHALL provide six standard middleware layers applied outermost-first:
 `wrap-trace-context`, `wrap-structured-logging`, `wrap-metrics`, `wrap-cascade-bridge`,
 `wrap-retry`, `wrap-error-enrichment`.
@@ -34,7 +34,7 @@ The system SHALL provide six standard middleware layers applied outermost-first:
 - **WHEN** an inner handler returns `{:escalate ...}`
 - **THEN** outer middleware propagates that result without converting it to `:ok` or mutating pipeline context
 
-### Requirement: wrap-retry only retries :transient errors
+### Requirement MID-003 [Priority: P1]: wrap-retry only retries :transient errors
 The system SHALL retry only errors with severity `:transient` in the `:decide` and `:act` stages.
 `:fatal` and `:degraded` errors SHALL NOT be retried. Maximum retries defaults to 2;
 base delay 100ms; max delay 5000ms with exponential backoff and jitter.
@@ -51,7 +51,7 @@ base delay 100ms; max delay 5000ms with exponential backoff and jitter.
 - **WHEN** a `:llm/rate-limited` error includes `:retry-after-ms` in the Fault
 - **THEN** `wrap-retry` waits exactly that duration before retrying
 
-### Requirement: wrap-cascade-bridge signals cascade on exhausted retries
+### Requirement MID-004 [Priority: P1]: wrap-cascade-bridge signals cascade on exhausted retries
 The system SHALL return `{:escalate fault}` when `wrap-retry` exhausts its retries on a
 `:transient` `:decide` error, signaling Cascade to try the next potency level. It SHALL NOT
 signal escalation by mutating the pipeline context.
@@ -60,7 +60,7 @@ signal escalation by mutating the pipeline context.
 - **WHEN** all retry attempts fail for a :decide :transient error
 - **THEN** `wrap-cascade-bridge` returns `{:escalate {:origin :decide :kind :retry/exhausted ...}}` and Cascade escalates to the next potency level
 
-### Requirement: Signal persistence uses mandatory PII-redaction middleware
+### Requirement MID-005 [Priority: P1]: Signal persistence uses mandatory PII-redaction middleware
 The system SHALL apply `wrap-pii-redaction` on the signal-write path before any Trace is
 persisted to the Signal Store. This middleware SHALL be mandatory whenever raw input is
 stored and SHALL use the component's configured redaction fields. If the redaction policy is
@@ -75,7 +75,7 @@ raw input, preserving only the input hash, and annotating the trace with the pol
 - **WHEN** raw input storage is enabled but the redaction policy is missing or malformed
 - **THEN** `wrap-pii-redaction` removes raw input from the trace, stores only the input hash, and records a redaction-policy failure annotation
 
-### Requirement: Custom middleware is declared in smithy.edn via stable capability slots
+### Requirement MID-006 [Priority: P2]: Custom middleware is declared in smithy.edn via stable capability slots
 The system SHALL support declaring custom middleware in smithy.edn against stable capability
 slots such as `:before-tracing`, `:before-retry`, `:after-retry`, and `:before-signal-write`,
 rather than by naming concrete implementation functions. Per-component `:retry` and `:logging`

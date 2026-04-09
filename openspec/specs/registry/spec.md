@@ -3,7 +3,7 @@ Define the Registry's four-map data model, expression vector storage, atomic CAS
 
 ## Requirements
 
-### Requirement: Registry stores four separate maps
+### Requirement REG-001 [Priority: P1]: Registry stores four separate maps
 The system SHALL store component data as four independent maps keyed by cell-id:
 `cells` (identity), `fates` (runtime state), `expressions` (DECIDE implementations),
 `wirings` (operational config). These SHALL never be merged into a single object.
@@ -12,7 +12,7 @@ The system SHALL store component data as four independent maps keyed by cell-id:
 - **WHEN** `resolve` is called with a cell-id
 - **THEN** it returns `{:cell ... :fate ... :exprs [...] :wiring ...}` assembled on demand
 
-### Requirement: Expressions stored as vectors per potency level
+### Requirement REG-002 [Priority: P1]: Expressions stored as vectors per potency level
 The system SHALL store expressions as `{[cell-id potency] -> [Expression]}` (vector, not scalar).
 Multiple expressions at the same potency level SHALL coexist without collision.
 
@@ -20,7 +20,7 @@ Multiple expressions at the same potency level SHALL coexist without collision.
 - **WHEN** two expressions are registered for the same cell-id and potency level
 - **THEN** both are stored and both are returned by resolve for that potency level
 
-### Requirement: Fate updates are atomic with CAS
+### Requirement REG-003 [Priority: P1]: Fate updates are atomic with CAS
 The system SHALL implement `update-fate!` with compare-and-swap semantics using `Fate.version`
 as the CAS key. `Fate.version` SHALL be monotonically incremented on every successful update.
 
@@ -32,7 +32,7 @@ as the CAS key. `Fate.version` SHALL be monotonically incremented on every succe
 - **WHEN** `update-fate!` is called with a stale expected version
 - **THEN** the call throws and the caller retries with the current version
 
-### Requirement: RegistryDiff commits are atomic
+### Requirement REG-004 [Priority: P1]: RegistryDiff commits are atomic
 The system SHALL implement `commit-diff!` such that all mutations in a RegistryDiff either
 all succeed or none do. Partial commits SHALL NOT occur.
 
@@ -44,7 +44,7 @@ all succeed or none do. Partial commits SHALL NOT occur.
 - **WHEN** a RegistryDiff commit fails partway through
 - **THEN** the registry is unchanged from its pre-commit state
 
-### Requirement: Initial Fate potency is highest available Expression potency
+### Requirement REG-005 [Priority: P2]: Initial Fate potency is highest available Expression potency
 The system SHALL set the initial Fate potency to the highest potency level for which an
 Expression is registered when a cell is first registered via `register!`.
 
