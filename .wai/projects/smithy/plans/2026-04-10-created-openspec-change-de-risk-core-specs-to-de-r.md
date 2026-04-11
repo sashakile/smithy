@@ -1,0 +1,1 @@
+Created OpenSpec change de-risk-core-specs to de-risk the Smithy spec corpus by gating topology on proven baseline differentiation, requiring versioned telemetry producers for analytics, strengthening cascade epoch semantics, and tightening CLI guardrails around topology and emergency reprogramming.

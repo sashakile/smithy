@@ -23,3 +23,9 @@ pom.xml.asc
 
 # Source documents
 *.docx
+
+# Beads / Dolt files (added by bd init)
+.beads-credential-key
+
+# Local Codex workspace state
+.codex/
