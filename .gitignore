@@ -28,4 +28,4 @@ pom.xml.asc
 .beads-credential-key
 
 # Local Codex workspace state
-.codex/
+.codex
