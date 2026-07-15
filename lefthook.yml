@@ -1,0 +1,66 @@
+# lefthook.yml — git hooks managed by lefthook
+# Install: lefthook install
+# Run all hooks: lefthook run <hook-name>
+
+pre-commit:
+  parallel: true
+  commands:
+    beads-sync:
+      run: bd hooks run pre-commit > /dev/null 2>&1; [ $? -eq 0 -o $? -eq 3 ]
+    trailing-whitespace:
+      glob: "*.{md,yaml,yml,toml,json,edn,clj,cljs,cljc,java}"
+      run: grep -n '[[:blank:]]$' {staged_files} && { echo "Trailing whitespace found"; exit 1; } || exit 0
+    end-of-file-fixer:
+      glob: "*.{md,yaml,yml,toml,json,edn,clj,cljs,cljc,java,sh}"
+      run: |
+        for f in {staged_files}; do
+          [ -s "$f" ] && [ "$(tail -c 1 "$f" | wc -l)" -eq 0 ] && echo "No newline at EOF: $f" && exit 1
+        done
+    check-yaml:
+      glob: "*.{yaml,yml}"
+      run: |
+        python3 -c "import yaml" 2>/dev/null || { echo "YAML validation: install python3-yaml (skipping)"; exit 0; }
+        for f in {staged_files}; do
+          python3 -c "import yaml, sys; yaml.safe_load(open('$f')); sys.exit(0)" 2>/dev/null || { echo "Invalid YAML: $f"; exit 1; }
+        done
+    check-large-files:
+      glob: "*"
+      run: |
+        for f in {staged_files}; do
+          size=$(wc -c < "$f")
+          if [ "$size" -gt 5000000 ]; then echo "File too large (>5MB): $f ($size bytes)"; exit 1; fi
+        done
+    pretender:
+      glob: "*.{clj,cljs,cljc,java,edn,js,ts,py}"
+      run: pretender check --threshold guidance {staged_files}
+    dont:
+      run: dont check
+
+pre-push:
+  parallel: false
+  commands:
+    beads-sync:
+      run: bd hooks run pre-push > /dev/null 2>&1; [ $? -eq 0 -o $? -eq 3 ]
+    wai-way:
+      run: wai way --json
+    espectacular:
+      run: espectacular check || true
+    spec-consistency:
+      run: scripts/check-spec-status.sh
+    doc-links:
+      run: scripts/check-doc-links.sh docs/*.md README.md
+
+post-checkout:
+  commands:
+    beads-sync:
+      run: bd hooks run post-checkout > /dev/null 2>&1; [ $? -eq 0 -o $? -eq 3 ]
+
+post-merge:
+  commands:
+    beads-sync:
+      run: bd hooks run post-merge > /dev/null 2>&1; [ $? -eq 0 -o $? -eq 3 ]
+
+prepare-commit-msg:
+  commands:
+    beads-sync:
+      run: bd hooks run prepare-commit-msg > /dev/null 2>&1; [ $? -eq 0 -o $? -eq 3 ]

@@ -29,3 +29,16 @@ pom.xml.asc
 
 # Local Codex workspace state
 .codex
+
+# dont — epistemic forcing-function store
+.dont/
+
+# espectacular — spec verification (stubs regenerated from seeds)
+.espectacular/
+
+# testaruda — test selection (binary store only)
+.testaruda/
+
+# Local tool backups
+.beads/hooks/*.old
+

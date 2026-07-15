@@ -6,6 +6,14 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  WAI_VERSION: v2026.3.2
+  DONT_VERSION: 0.3.0
+  LEFTHOOK_VERSION: 1.11.0
+  PRETENDER_VERSION: 0.1.0
+  ESPECTACULAR_VERSION: 0.2.1
+  TESTARUDA_VERSION: 0.1.0
+
 jobs:
   hygiene:
     name: Repo hygiene
@@ -14,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install wai
         run: |
-          curl -fsSL https://github.com/charly-vibes/wai/releases/download/v2026.3.2/wai_2026.3.2_linux_amd64.tar.gz | tar -xz -C /usr/local/bin
+          curl -fsSL https://github.com/charly-vibes/wai/releases/download/${{ env.WAI_VERSION }}/wai_${WAI_VERSION#v}_linux_amd64.tar.gz | tar -xz -C /usr/local/bin
       - name: Check repo best practices
         run: wai way --json
 
@@ -24,25 +32,67 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Verify openspec change proposals have valid status
-        run: |
-          invalid=0
-          for f in openspec/changes/*.md; do
-            [ "$f" = "openspec/changes/.gitkeep" ] && continue
-            status=$(grep -m1 '^**Status:**' "$f" | sed 's/.*\*\*Status:\*\* //')
-            case "$status" in
-              proposed|accepted|rejected|deployed|archived) ;;
-              *) echo "INVALID status '$status' in $f"; invalid=1 ;;
-            esac
-          done
-          exit $invalid
+        run: scripts/check-spec-status.sh
       - name: Check for broken internal links in docs
         run: |
           errors=0
           for f in docs/*.md README.md; do
-            # Extract markdown links to local files
-            grep -oP '\[.*?\]\(\K[^)#]+' "$f" 2>/dev/null | while read -r link; do
-              [ -f "$link" ] || { echo "Broken link: $link in $f"; errors=1; }
+            [ ! -f "$f" ] && continue
+            grep -oP '\[.*?\]\(\K[^)#:]+' "$f" 2>/dev/null | while read -r link; do
+              case "$link" in
+                http*|mailto*|''|#*|/*) continue ;;
+              esac
+              target="$(dirname "$f")/$link"
+              if [ ! -f "$target" ] && [ ! -d "$target" ]; then
+                echo "Broken link: '$link' in $f (resolved: $target)"
+                errors=1
+              fi
             done
           done
           exit $errors
-      # TODO: add language-specific build and test steps here
+
+  epistemic-grounding:
+    name: Epistemic grounding
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dont
+        run: |
+          cargo install dont --version ${{ env.DONT_VERSION }} || \
+          curl -fsSL "https://github.com/ak/comma/releases/download/dont-v${DONT_VERSION}/dont-x86_64-unknown-linux-gnu.tar.gz" | tar -xz -C /usr/local/bin
+      - name: Check all claims are grounded
+        run: dont check --json
+
+  spec-verification:
+    name: Spec verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install espectacular
+        run: |
+          cargo install espectacular --version ${{ env.ESPECTACULAR_VERSION }} || \
+          curl -fsSL "https://github.com/ak/comma/releases/download/espectacular-v${ESPECTACULAR_VERSION}/espectacular-x86_64-unknown-linux-gnu.tar.gz" | tar -xz -C /usr/local/bin
+      - name: Reseed spec-to-test stubs
+        run: espectacular init --json
+      - name: Check spec coverage
+        run: espectacular check --json
+        continue-on-error: true  # spec phase — no tests implemented yet
+
+  code-quality:
+    name: Code quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pretender
+        run: |
+          cargo install pretender --version ${{ env.PRETENDER_VERSION }} || \
+          curl -fsSL "https://github.com/ak/comma/releases/download/pretender-v${PRETENDER_VERSION}/pretender-x86_64-unknown-linux-gnu.tar.gz" | tar -xz -C /usr/local/bin
+      - name: Run pretender check
+        run: pretender check --threshold guidance
+        continue-on-error: true  # spec phase — no code to check yet
+
+  # TODO: Add language-specific build and test steps when implementation begins
+  # - Clojure: deps.edn / lein deps + clojure -M:test
+  # - testaruda: testaruda select --from git diff --name-only origin/main
+  # - lefthook: lefthook run pre-commit / pre-push
+

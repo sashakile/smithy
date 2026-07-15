@@ -5,8 +5,8 @@
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "// Tool versions pinned 2026-03-10. Check for updates at release pages.": "",
-  "postCreateCommand": "curl -fsSL https://github.com/charly-vibes/wai/releases/download/v2026.3.2/wai_2026.3.2_linux_amd64.tar.gz | tar -xz -C /usr/local/bin && curl -fsSL https://github.com/steveyegge/beads/releases/download/v0.59.0/beads_0.59.0_linux_amd64.tar.gz | tar -xz -C /tmp && mv /tmp/bd /usr/local/bin/bd",
+  "// Tool versions pinned 2026-07-15. Tools installed individually to avoid rebuild bloat.": "",
+  "postCreateCommand": "curl -fsSL https://github.com/charly-vibes/wai/releases/download/v2026.3.2/wai_2026.3.2_linux_amd64.tar.gz | tar -xz -C /usr/local/bin && curl -fsSL https://github.com/steveyegge/beads/releases/download/v0.59.0/beads_0.59.0_linux_amd64.tar.gz | tar -xz -C /tmp && mv /tmp/bd /usr/local/bin/bd && echo 'Install additional tools: cargo install dont espectacular pretender testaruda && go install github.com/evilmartians/lefthook@latest'",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -15,3 +15,4 @@
     }
   }
 }
+
