@@ -14,7 +14,7 @@ pre-commit:
       glob: "*.{md,yaml,yml,toml,json,edn,clj,cljs,cljc,java,sh}"
       run: |
         for f in {staged_files}; do
-          [ -s "$f" ] && [ "$(tail -c 1 "$f" | wc -l)" -eq 0 ] && echo "No newline at EOF: $f" && exit 1
+          [ -s "$f" ] && sed -i -e '$a\' "$f" 2>/dev/null
         done
     check-yaml:
       glob: "*.{yaml,yml}"

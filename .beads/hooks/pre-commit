@@ -67,4 +67,3 @@ call_lefthook()
 }
 
 call_lefthook run "pre-commit" "$@"
-
