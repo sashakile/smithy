@@ -42,7 +42,7 @@ Three deliverables:
 ### 1.4 Goals
 
 1. Principled, automated path from P4 LLM agents to P1 deterministic code
-2. Reduce production agent costs 50–90% through progressive differentiation
+2. Reduce production agent costs 50–97% through progressive differentiation
 3. Enable reversible differentiation
 4. Generate human-readable Drools rules; domain expert review and approval workflows
 5. Integrate with Spring AI, MCP, A2A, LangGraph, CrewAI
@@ -105,7 +105,7 @@ Three distinct metrics are used throughout the system. Do not conflate them:
 | Metric | Definition | Used By |
 |---|---|---|
 | **Confidence** | Per-decision certainty score (0.0–1.0) returned by DECIDE. Compared against Fate threshold to trigger cascade escalation. | Pipeline, Cascade |
-| **Coverage** | Percentage of total traffic a lower potency level can handle (i.e., produces a Decision above threshold). Measures breadth. | `mr plan`, Proposals |
+| **Coverage** | Percentage of total traffic a lower potency level can resolve without escalation (i.e., produces a Decision meeting or exceeding threshold at that level). Measures breadth. | `mr plan`, Proposals |
 | **Agreement** | Percentage of shadow decisions where lower potency matches P4 ground truth. Measures fidelity. | Shadow deployment, `mr review` |
 
 ---
@@ -138,10 +138,10 @@ verb-resource model.
 | Command | Description |
 |---|---|
 | `mr get cells` | List all registered components with current potency levels |
-| `mr describe <n>` | Show full component descriptor: genome, lineage, potency score |
+| `mr describe <component>` | Show full component descriptor: genome, lineage, potency score |
 | `mr potency` | Show potency distribution across all components |
-| `mr lineage <n>` | Show differentiation/reprogramming history |
-| `mr review <n>` | Review pending differentiation proposal |
+| `mr lineage <component>` | Show differentiation/reprogramming history |
+| `mr review <component>` | Review pending differentiation proposal |
 
 **Development & observability:**
 
@@ -149,8 +149,8 @@ verb-resource model.
 |---|---|
 | `mr dev` | Start DR in development mode with hot-reloading and nREPL |
 | `mr repl` | Connect to running DR's nREPL |
-| `mr shadow <n>` | Run shadow deployment comparing two potency levels |
-| `mr trace <n>` | View recent signaling history for a component |
+| `mr shadow <component>` | Run shadow deployment comparing two potency levels |
+| `mr trace <component>` | View recent signaling history for a component |
 | `mr status` | Show DR health, component states, active shadow deployments |
 | `mr metrics` | Show cost, latency, throughput metrics |
 
@@ -159,9 +159,9 @@ verb-resource model.
 | Command | Description |
 |---|---|
 | `mr plan --topology` | Analyze full component graph for split and fuse candidates |
-| `mr split <c> --into <a> <b>` | Manually propose a split |
+| `mr split <component> --into <a> <b>` | Manually propose a split |
 | `mr fuse <a> <b> --as <merged>` | Manually propose a fusion |
-| `mr review --topology <n>` | Review pending split or fuse proposal |
+| `mr review --topology <component>` | Review pending split or fuse proposal |
 | `mr topology` | Display component dependency graph with coupling scores |
 
 ### 3.3 Example Workflow: Day 1 → Day 30
@@ -169,11 +169,11 @@ verb-resource model.
 ```sh
 mr init
 mr plan ticket-classifier --target-format drools
-# Analyzes 5,000 traces. Proposes P4→P1 (Drools). 14 DRL + 1 DMN. Coverage: 73%.
+# Analyzes 5,000 traces. Proposes P4→P1 (Drools). 14 DRL + 1 DMN. Agreement: 0.97, Coverage: 73%.
 mr shadow ticket-classifier --from P4 --to P1 --duration 24h
 mr review ticket-classifier
 mr differentiate ticket-classifier --to P1
-# P1 handles 73%; 27% escalates to P4. Cost: $0.05 → ~$0.014/ticket.
+# P1 handles 73% with high agreement; 27% escalates to P4. Cost: $0.50 → ~$0.135/ticket.
 mr reprogram ticket-classifier --to P4 --reason "new product launch"
 ```
 
@@ -208,7 +208,7 @@ mr reprogram ticket-classifier --to P4 --reason "new product launch"
 
 - **Worst-case latency:** P1→P2→P3→P4 ≈ 32 seconds
 - **Worst-case cost:** ~$0.551 (P1: ~$0 + P2: ~$0.001 + P3: ~$0.05 + P4: ~$0.50). Rare — typically <1% of traffic reaches P4.
-- **Cascade timeout:** configurable `:cascade-timeout` (default: 30s)
+- **Cascade timeout:** configurable `:cascade-timeout` (default: 35s). Full escalation to P4 can take up to 32s; the default accounts for this.
 - **Level skipping:** `:cascade-skip` bypasses unused potency levels (e.g. P1→P4 directly)
 - Returns best sub-threshold Decision if all levels fail; fault only on infrastructure failure.
 - **Caller responsibility:** The HTTP API includes `confidence` in every response. Callers
@@ -377,7 +377,7 @@ zero downtime. 60-second rule deploy cycle.
 
 ## 7. Use Cases & Cost Projections
 
-| Use Case | Baseline Cost/Day | After Differentiation | Reduction |
+| Use Case | Baseline Cost/Day (P3) | After Differentiation | Reduction |
 |---|---|---|---|
 | Support ticket classification (10K/day) | $500 | ~$27.50 | 94.5% |
 | Content moderation (50K/day) | $2,500 | ~$132.50 | 94.7% |
@@ -385,6 +385,10 @@ zero downtime. 60-second rule deploy cycle.
 | Fraud detection (2.4M/day) | $120,000 | ~$2,592 | 97.8% |
 | Chatbot intent detection (50K/day) | $2,500 | ~$932 | 62.7%¹ |
 | Dynamic pricing (100K/day) | $5,000 | ~$275 | 94.5% |
+
+> **Baseline note:** Baseline costs use P3 pricing ($0.05/call, constrained LLM), which is the
+typical starting point for production agents. A full P4 agent (tools, multi-turn reasoning) at
+$0.50/call would have 10× higher baseline costs and correspondingly larger absolute savings.
 
 ¹ Lower reduction than other use cases due to higher intent variance — chatbot intents
 have more long-tail patterns that resist P1 differentiation, keeping more traffic at P3/P4.

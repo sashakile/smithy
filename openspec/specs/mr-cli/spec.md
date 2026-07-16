@@ -10,17 +10,22 @@ The system SHALL analyze a component's signaling history via `mr plan <component
 a differentiation target. The plan SHALL include coverage rate, projected cost savings, and
 generated artifacts (DRL rules, DMN tables, ONNX model spec). A minimum of 1,000 traces SHALL
 be required before a plan is generated. A potency target SHALL be considered feasible only if it
-meets all configured promotion thresholds: agreement rate ≥ 0.95 against the current potency on
-the evaluation corpus, coverage rate ≥ 0.90, and projected daily savings > 0. The default target
-selection rule SHALL choose the lowest potency that satisfies all three thresholds.
+meets the configured agreement threshold (default: ≥ 0.95 against the current potency on the
+evaluation corpus) and projected daily savings > 0. Coverage SHALL be reported as an economic
+input to the savings calculation, not a hard feasibility threshold. The default target selection
+rule SHALL choose the lowest potency that satisfies the agreement and savings thresholds.
+
+The coverage threshold MAY be configured via `:promotion :min-coverage` in smithy.edn (default: 0.0,
+meaning no minimum). The agreement threshold MAY be configured via `:promotion :min-agreement`
+(default: 0.95).
 
 #### Scenario: Plan requires minimum trace count
 - **WHEN** `mr plan` is run on a component with fewer than 1,000 traces
 - **THEN** mr plan exits with an error indicating insufficient trace history
 
-#### Scenario: Plan proposes lowest feasible potency
-- **WHEN** `mr plan` finds that P1 coverage is 73% and P2 coverage is 91%
-- **THEN** the proposal targets P2 because P1 fails the default 90% coverage threshold and P2 is the lowest feasible potency
+#### Scenario: Plan proposes lowest feasible potency based on agreement
+- **WHEN** `mr plan` finds that P1 agreement is 0.97 and P2 agreement is 0.99
+- **THEN** the proposal targets P1 because P1 exceeds the default agreement threshold and is the lowest potency
 
 #### Scenario: Plan generates human-readable Drools artifacts
 - **WHEN** `mr plan` targets a Drools P1 differentiation

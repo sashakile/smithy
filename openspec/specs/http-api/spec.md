@@ -106,3 +106,23 @@ element epoch SHALL suppress late writes and late response replacement for that 
 #### Scenario: Timed-out element cannot overwrite timeout Fault
 - **WHEN** an unfinished batch element completes after the batch timeout has closed its epoch
 - **THEN** its late completion is discarded and the element remains a timeout Fault in the final response
+
+### Requirement API-007 [Priority: P1]: All decision endpoints require authentication
+The system SHALL reject unauthenticated requests to `/v1/decide`, `/v1/decide/batch`, and
+`/v1/observe` with HTTP 401 Unauthorized. Authentication SHALL use Bearer JWT in the
+`Authorization` header or mTLS client certificates. The system SHALL also reject authenticated
+requests that lack the required authorization scope for the target cell with HTTP 403 Forbidden.
+Configuration SHALL allow authentication to be disabled for development via
+`:dr :http :auth {:enabled false}`.
+
+#### Scenario: Unauthenticated request returns 401
+- **WHEN** POST /v1/decide is called without an Authorization header
+- **THEN** response is 401 with `{"fault": {"origin": "auth", "kind": "auth/missing", ...}}`
+
+#### Scenario: Unauthorized request returns 403
+- **WHEN** POST /v1/decide is called with a valid JWT that lacks the required cell scope
+- **THEN** response is 403 with `{"fault": {"origin": "auth", "kind": "auth/forbidden", ...}}`
+
+#### Scenario: Auth is bypassable in dev mode
+- **WHEN** `:dr :http :auth {:enabled false}` is configured
+- **THEN** POST /v1/decide succeeds without authentication

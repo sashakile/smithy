@@ -24,7 +24,7 @@ P2: ONNX / ML classifier    ~$0.001/call  5–50ms
 P1: Drools rules / lookup   ~$0/call      <1ms
 ```
 
-A ticket classifier that costs $500/day at P4 can cost **$27.50/day** after differentiation
+A ticket classifier that costs $500/day at P3 (constrained LLM) can cost **$27.50/day** after differentiation
 (94.5% reduction). Fraud detection: $120,000/day → $2,592/day (97.8% reduction).
 
 ## What's in This Repo

@@ -260,7 +260,7 @@ with sufficient confidence, or returns the best sub-threshold Decision.
 
 ```clojure
 (defn cascade [cell fate expressions-by-potency wiring input ctx]
-  (let [levels (cascade-order (:potency fate) wiring)
+  (let [levels (cascade-order wiring)
         thresh (:threshold fate)]
     (reduce
       (fn [best-so-far potency]
@@ -281,10 +281,11 @@ with sufficient confidence, or returns the best sub-threshold Decision.
                                        :message "All levels exhausted" :retry? false}}))))
       nil levels)))
 
-(defn cascade-order [base-potency wiring]
-  ;; Returns all potency levels from P1 up to P4, starting at the base and
-  ;; escalating upward. base-potency is the STARTING level (typically the
-  ;; cell's current Fate potency), not a ceiling.
+(defn cascade-order [wiring]
+  ;; Returns all potency levels from P1 up to P4, ascending.
+  ;; The cascade always starts at P1 and escalates upward regardless of the
+  ;; component's current Fate potency. A differentiated component's unconfident
+  ;; traffic escalates to higher (more expensive) levels.
   (let [skip (get-in wiring [:cascade :skip] #{})]
     (->> [:P1 :P2 :P3 :P4]
          (remove skip)

@@ -13,10 +13,11 @@ independently testable.
 - **THEN** it executes RECEIVE→DECIDE→ACT→EMIT without cascade logic
 
 ### Requirement CAS-002 [Priority: P1]: Cascade tries potency levels in ascending order
-The system SHALL try potency levels from lowest (P1) up to the component's base potency,
-stopping when a Decision meets or exceeds the confidence threshold. Levels in the `:cascade :skip`
-set SHALL be omitted. `{:escalate ...}` results from the pipeline SHALL advance Cascade to the
-next eligible potency level without being treated as terminal faults.
+The system SHALL try potency levels from P1 up to P4 in ascending order, starting the search
+at P1 regardless of the component's current Fate potency. A differentiated component's
+unconfident traffic SHALL escalate to higher (more expensive) levels. Levels in the
+`:cascade :skip` set SHALL be omitted. `{:escalate ...}` results from the pipeline SHALL
+advance Cascade to the next eligible potency level without being treated as terminal faults.
 
 #### Scenario: Cascade stops at first confident result
 - **WHEN** P1 returns a Decision with confidence ≥ threshold
@@ -81,7 +82,7 @@ or threshold. Callers SHALL retry on version mismatch.
 - **THEN** one succeeds and one receives a version-mismatch error and retries
 
 ### Requirement CAS-007 [Priority: P2]: Cascade timeout is configurable
-The system SHALL support a configurable `:cascade :timeout-ms` (default: 30000ms). If the
+The system SHALL support a configurable `:cascade :timeout-ms` (default: 35000ms). If the
 cascade exceeds this timeout, the highest-confidence result obtained so far SHALL be returned.
 If no potency level has completed before the timeout, cascade SHALL return
 `{:fault {:origin :decide :kind :cascade/timeout :retry? true}}`.
