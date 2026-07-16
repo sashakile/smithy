@@ -22,6 +22,7 @@ jobs:
       - name: Install wai
         run: |
           curl -fsSL "https://github.com/charly-vibes/wai/releases/download/${{ env.WAI_VERSION }}/wai_${WAI_VERSION#v}_linux_amd64.tar.gz" | tar -xz -C /usr/local/bin
+          chmod +x /usr/local/bin/wai
       - name: Check repo best practices
         run: wai way --json
 
@@ -43,7 +44,7 @@ jobs:
       - name: Install dont
         run: cargo install dont --version ${{ env.DONT_VERSION }}
       - name: Check all claims are grounded
-        run: dont check --json
+        run: dont check
 
   spec-verification:
     name: Spec verification
@@ -53,7 +54,7 @@ jobs:
       - name: Install espectacular
         run: cargo install espectacular --version ${{ env.ESPECTACULAR_VERSION }}
       - name: Reseed spec-to-test stubs
-        run: espectacular init --json
+        run: espectacular init
       - name: Check spec coverage
         run: espectacular check --json
         continue-on-error: true  # spec phase — no tests implemented yet
@@ -66,7 +67,7 @@ jobs:
       - name: Install pretender
         run: cargo install pretender --version ${{ env.PRETENDER_VERSION }}
       - name: Run pretender check
-        run: pretender check --threshold guidance
+        run: pretender check --mode tiered .
         continue-on-error: true  # spec phase — no code to check yet
 
   # TODO: Add language-specific build and test steps when implementation begins
