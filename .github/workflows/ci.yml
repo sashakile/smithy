@@ -8,10 +8,9 @@ on:
 
 env:
   WAI_VERSION: v2026.3.2
-  DONT_VERSION: 0.3.0
-  LEFTHOOK_VERSION: 1.11.0
-  PRETENDER_VERSION: 0.1.0
-  ESPECTACULAR_VERSION: 0.2.1
+  DONT_VERSION: 0.1.0
+  ESPECTACULAR_VERSION: 0.2.0
+  PRETENDER_VERSION: 0.2.0
   TESTARUDA_VERSION: 0.1.0
 
 jobs:
@@ -42,9 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install dont
-        run: |
-          cargo install dont --version ${{ env.DONT_VERSION }} || \
-          curl -fsSL "https://github.com/ak/comma/releases/download/dont-v${DONT_VERSION}/dont-x86_64-unknown-linux-gnu.tar.gz" | tar -xz -C /usr/local/bin
+        run: cargo install dont --version ${{ env.DONT_VERSION }}
       - name: Check all claims are grounded
         run: dont check --json
 
@@ -54,9 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install espectacular
-        run: |
-          cargo install espectacular --version ${{ env.ESPECTACULAR_VERSION }} || \
-          curl -fsSL "https://github.com/ak/comma/releases/download/espectacular-v${ESPECTACULAR_VERSION}/espectacular-x86_64-unknown-linux-gnu.tar.gz" | tar -xz -C /usr/local/bin
+        run: cargo install espectacular --version ${{ env.ESPECTACULAR_VERSION }}
       - name: Reseed spec-to-test stubs
         run: espectacular init --json
       - name: Check spec coverage
@@ -69,9 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install pretender
-        run: |
-          cargo install pretender --version ${{ env.PRETENDER_VERSION }} || \
-          curl -fsSL "https://github.com/ak/comma/releases/download/pretender-v${PRETENDER_VERSION}/pretender-x86_64-unknown-linux-gnu.tar.gz" | tar -xz -C /usr/local/bin
+        run: cargo install pretender --version ${{ env.PRETENDER_VERSION }}
       - name: Run pretender check
         run: pretender check --threshold guidance
         continue-on-error: true  # spec phase — no code to check yet
