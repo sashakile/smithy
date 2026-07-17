@@ -265,3 +265,8 @@ Run `ah check` to verify spec-test correspondence before committing.
 - `ah signals` — emit dont drift signals
 <!-- ah:managed:end -->
 
+
+## Git & Workflow Discipline
+
+- **Never use `git add -A`** — always stage specific files with explicit paths
+- **Per-ticket pipeline**: always follow `TDD → ro5u → fix → commit → next ticket`
